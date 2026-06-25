@@ -1,0 +1,3794 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Dashboard territorial de proyectos · Piura</title>
+
+  <link rel="icon" href="data:," />
+  <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+  <script src="https://js.arcgis.com/4.30/"></script>
+
+  <style>
+    :root{
+      --vino:#7f1737;
+      --vino2:#a62650;
+      --vino3:#c43b68;
+      --fondo:#eef1f4;
+      --panel:#ffffff;
+      --texto:#172033;
+      --muted:#667085;
+      --borde:#dce2e8;
+      --gris:#6f7782;
+      --gris2:#a8afb8;
+      --sombra:0 14px 34px rgba(15,23,42,.14);
+      --radio:18px;
+    }
+
+    *{box-sizing:border-box}
+    html,body{margin:0;width:100%;height:100%;overflow:hidden;font-family:"Segoe UI",Arial,Helvetica,sans-serif;background:var(--fondo);color:var(--texto)}
+    button,select{font:inherit}
+
+    .app{width:100%;height:100%;display:grid;grid-template-rows:auto 1fr;background:var(--fondo)}
+
+    .topbar{
+      min-height:76px;
+      padding:14px 20px;
+      color:#fff;
+      background:linear-gradient(115deg,#6d1230 0%,var(--vino) 48%,#9a254d 100%);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:18px;
+      box-shadow:0 5px 18px rgba(77,9,34,.28);
+      position:relative;
+      z-index:20;
+    }
+    .brand h1{margin:0;font-size:24px;line-height:1.1;font-weight:900;letter-spacing:.1px}
+    .brand p{margin:5px 0 0;font-size:11px;font-weight:800;letter-spacing:.55px;text-transform:uppercase;opacity:.9}
+
+    .topKpis{display:flex;gap:10px;align-items:stretch;flex-wrap:wrap;justify-content:flex-end}
+    .topKpi{min-width:126px;padding:9px 12px;border:1px solid rgba(255,255,255,.22);border-radius:13px;background:rgba(255,255,255,.11);backdrop-filter:blur(5px)}
+    .topKpi span{display:block;font-size:10px;font-weight:800;opacity:.82;text-transform:uppercase;letter-spacing:.35px}
+    .topKpi strong{display:block;margin-top:2px;font-size:20px;line-height:1;font-weight:900}
+
+    .workspace{position:relative;min-height:0;overflow:hidden}
+    #viewDiv{position:absolute;inset:0}
+
+    .dashboardPanel{
+      position:absolute;left:14px;top:14px;z-index:30;width:350px;max-height:calc(100% - 28px);
+      background:rgba(255,255,255,.96);border:1px solid rgba(220,226,232,.95);border-radius:var(--radio);
+      box-shadow:var(--sombra);overflow:auto;backdrop-filter:blur(7px)
+    }
+    .panelHead{padding:16px 16px 13px;border-bottom:1px solid var(--borde);display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+    .panelHead h2{margin:0;font-size:15px;font-weight:900;color:var(--vino)}
+    .panelHead p{margin:4px 0 0;font-size:11px;color:var(--muted);font-weight:700}
+    .badge{flex:0 0 auto;padding:7px 10px;border-radius:999px;background:#f8e8ee;color:var(--vino);font-size:10px;font-weight:900;border:1px solid #efcbd7}
+
+    .panelBody{padding:14px}
+    .filters{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .field{display:grid;gap:6px;min-width:0}
+    .field label{font-size:10px;color:#475467;font-weight:900;letter-spacing:.35px;text-transform:uppercase}
+    .field select{width:100%;height:40px;padding:0 12px;border:1px solid #cfd6de;border-radius:11px;background:#fff;color:#243447;font-size:12px;font-weight:800;outline:none}
+    .field select:focus{border-color:var(--vino3);box-shadow:0 0 0 3px rgba(196,59,104,.12)}
+    .field select:disabled{opacity:.55}
+    .field.full{grid-column:1/-1}
+
+    .actions{display:flex;gap:8px;margin-top:10px}
+    .btn{height:39px;border-radius:11px;padding:0 14px;font-size:11px;font-weight:900;cursor:pointer;border:1px solid var(--vino);transition:.16s ease}
+    .btnPrimary{background:var(--vino);color:#fff;flex:1}
+    .btnPrimary:hover{background:#681028}
+    .btnGhost{background:#fff;color:var(--vino)}
+    .btnGhost:hover{background:#fbf0f4}
+
+    .kpiGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-top:14px}
+    .kpi{padding:12px 10px;border:1px solid var(--borde);border-radius:13px;background:linear-gradient(180deg,#fff,#f8fafb);min-width:0}
+    .kpi span{display:block;color:#667085;font-size:9px;font-weight:900;text-transform:uppercase;letter-spacing:.3px}
+    .kpi strong{display:block;margin-top:5px;color:#26313f;font-size:22px;font-weight:900;line-height:1}
+    .kpi small{display:block;margin-top:5px;color:#98a2b3;font-size:9px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+    /* KPI de servicios rodeando el mapa */
+    .indicatorSection{
+      position:absolute;
+      inset:0;
+      z-index:28;
+      pointer-events:none;
+    }
+    .indicatorTitle{display:none}
+    .indicatorGrid{position:absolute;inset:0;pointer-events:none}
+    .indicatorCard{
+      position:absolute;
+      width:214px;
+      min-height:106px;
+      padding:14px 15px;
+      border:1px solid #d9dde2;
+      border-radius:3px;
+      background:rgba(255,255,255,.97);
+      box-shadow:0 5px 18px rgba(15,23,42,.10);
+      display:flex;
+      flex-direction:column;
+      align-items:flex-start;
+      justify-content:center;
+      gap:7px;
+      min-width:0;
+      pointer-events:auto;
+      backdrop-filter:blur(4px);
+    }
+    .indicatorCard::before{
+      content:"";
+      position:absolute;
+      left:0;top:0;bottom:0;
+      width:4px;
+      background:var(--vino);
+    }
+    .indicatorIcon{
+      width:26px;height:26px;
+      flex:0 0 26px;
+      border-radius:5px;
+      display:grid;
+      place-items:center;
+      background:#f8e8ee;
+      color:var(--vino);
+    }
+    .indicatorIcon svg{width:15px;height:15px;fill:currentColor}
+    .indicatorText{min-width:0;width:100%}
+    .indicatorText strong{
+      display:block;
+      margin-top:2px;
+      font-size:35px;
+      line-height:.95;
+      color:#111;
+      font-weight:800;
+      letter-spacing:-1px;
+    }
+    .indicatorText span{
+      display:block;
+      margin-top:8px;
+      font-size:10px;
+      line-height:1.25;
+      color:#9a3b50;
+      font-weight:800;
+      text-transform:none;
+      letter-spacing:.05px;
+    }
+    .indicatorCard.loading .indicatorText strong{color:#98a2b3}
+    .indicatorCard.error .indicatorText strong{font-size:18px;color:#b42318}
+
+    /* Columna derecha */
+    .indicatorCard:nth-child(1){right:14px;top:74px}
+    .indicatorCard:nth-child(2){right:14px;top:190px}
+    .indicatorCard:nth-child(3){right:14px;top:306px}
+    .indicatorCard:nth-child(4){right:14px;top:422px}
+
+    /* Franja inferior */
+    .indicatorCard:nth-child(5),
+    .indicatorCard:nth-child(6),
+    .indicatorCard:nth-child(7),
+    .indicatorCard:nth-child(8){
+      bottom:14px;
+      width:calc((100% - 350px - 214px - 84px) / 4);
+      min-width:165px;
+      height:118px;
+    }
+    .indicatorCard:nth-child(5){left:364px}
+    .indicatorCard:nth-child(6){left:calc(364px + ((100% - 350px - 214px - 84px) / 4) + 10px)}
+    .indicatorCard:nth-child(7){left:calc(364px + 2 * (((100% - 350px - 214px - 84px) / 4) + 10px))}
+    .indicatorCard:nth-child(8){left:calc(364px + 3 * (((100% - 350px - 214px - 84px) / 4) + 10px))}
+
+    .status{margin-top:12px;padding:10px 11px;border-radius:11px;background:#f7f8fa;border:1px solid var(--borde);color:#475467;font-size:11px;font-weight:800;line-height:1.35}
+    .status.error{background:#fff1f2;border-color:#fecdd3;color:#b42318}
+
+    .toolDock{position:absolute;right:242px;top:14px;z-index:35;display:flex;gap:8px}
+    .toolBtn{width:44px;height:44px;border-radius:13px;border:1px solid var(--borde);background:rgba(255,255,255,.96);box-shadow:0 8px 20px rgba(15,23,42,.13);cursor:pointer;display:grid;place-items:center;color:var(--vino);transition:.16s ease}
+    .toolBtn svg{width:21px;height:21px;display:block;fill:currentColor}
+    .toolBtn:hover,.toolBtn.active{transform:translateY(-1px);background:var(--vino);color:#fff;border-color:var(--vino)}
+
+    .toolPanel{position:absolute;right:242px;top:68px;z-index:34;width:360px;max-height:calc(100% - 84px);display:none;grid-template-rows:auto 1fr;background:#fff;border:1px solid var(--borde);border-radius:16px;box-shadow:var(--sombra);overflow:hidden}
+    .toolPanel.open{display:grid}
+    .toolPanelHead{padding:11px 13px;background:linear-gradient(115deg,#6d1230,var(--vino2));color:#fff;display:flex;align-items:center;justify-content:space-between;gap:10px}
+    .toolPanelHead strong{font-size:13px}
+    .closePanel{width:30px;height:30px;border-radius:9px;border:1px solid rgba(255,255,255,.28);background:rgba(255,255,255,.12);color:#fff;font-weight:900;cursor:pointer}
+    .toolPanelBody{overflow:auto;min-height:150px;background:#fff}
+
+    .esri-layer-list,.esri-legend,.esri-basemap-gallery{background:#fff!important;color:#172033!important}
+    .esri-widget{font-family:"Segoe UI",Arial,sans-serif}
+    .esri-ui-bottom-left{bottom:8px!important;left:8px!important}
+
+    @media(max-width:900px){
+      .topbar{align-items:flex-start;flex-direction:column}
+      .topKpis{justify-content:flex-start}
+      .dashboardPanel{width:min(360px,calc(100% - 28px));max-height:55%}
+      .toolDock{top:auto;bottom:14px}
+      .toolPanel{top:auto;bottom:68px;width:min(360px,calc(100% - 28px));max-height:48%}
+    }
+    @media(max-width:560px){
+      .brand h1{font-size:19px}.topKpi{min-width:104px}.topKpi strong{font-size:17px}
+      .dashboardPanel{left:8px;top:8px;width:calc(100% - 16px)}
+      .filters{grid-template-columns:1fr}.field.full{grid-column:auto}
+      .kpiGrid{grid-template-columns:1fr 1fr 1fr}
+      .toolDock{right:8px;bottom:8px}.toolPanel{right:8px;bottom:60px;width:calc(100% - 16px)}
+    }
+
+    @media(max-width:1180px){
+      .indicatorCard:nth-child(1),.indicatorCard:nth-child(2),.indicatorCard:nth-child(3),.indicatorCard:nth-child(4){width:190px}
+      .toolDock{right:218px}
+      .toolPanel{right:218px}
+      .indicatorCard:nth-child(5),.indicatorCard:nth-child(6),.indicatorCard:nth-child(7),.indicatorCard:nth-child(8){
+        width:calc((100% - 350px - 190px - 84px) / 4);
+        min-width:140px;
+      }
+    }
+    @media(max-width:980px){
+      .indicatorSection{display:none}
+      .toolDock{right:14px}
+      .toolPanel{right:14px}
+    }
+
+
+    /* =========================================================
+       NUEVA COMPOSICIÓN: MAPA PRINCIPAL + KPI PROTAGONISTAS
+       ========================================================= */
+    .workspace{
+      position:relative;
+      min-height:0;
+      overflow:hidden;
+      padding:14px;
+      background:#eef1f4;
+    }
+
+    /* El mapa deja de ocupar todo el fondo: ahora es un bloque principal */
+    #viewDiv{
+      position:absolute;
+      left:14px;
+      top:14px;
+      right:304px;
+      bottom:178px;
+      border:1px solid var(--borde);
+      border-radius:16px;
+      overflow:hidden;
+      background:#fff;
+      box-shadow:var(--sombra);
+    }
+
+    /* El filtro permanece dentro del mapa */
+    .dashboardPanel{
+      left:28px;
+      top:28px;
+      width:340px;
+      max-height:calc(100% - 220px);
+      border-radius:15px;
+      box-shadow:0 12px 30px rgba(15,23,42,.18);
+    }
+
+    /* Indicadores como paneles grandes, no como tarjetas flotantes pequeñas */
+    .indicatorSection{
+      position:absolute;
+      inset:14px;
+      z-index:28;
+      pointer-events:none;
+    }
+
+    .indicatorGrid{
+      position:absolute;
+      inset:0;
+      display:grid;
+      grid-template-columns:repeat(4,minmax(0,1fr)) 276px;
+      grid-template-rows:repeat(4,minmax(0,1fr)) 150px;
+      gap:10px;
+      pointer-events:none;
+    }
+
+    .indicatorCard{
+      position:relative !important;
+      inset:auto !important;
+      width:auto !important;
+      height:auto !important;
+      min-width:0 !important;
+      min-height:0;
+      padding:16px 18px 15px;
+      border-radius:14px;
+      border:1px solid var(--borde);
+      background:#fff;
+      box-shadow:0 10px 24px rgba(15,23,42,.11);
+      justify-content:center;
+      gap:9px;
+      overflow:hidden;
+    }
+
+    .indicatorCard::before{
+      left:0;
+      top:0;
+      bottom:auto;
+      width:100%;
+      height:5px;
+      background:linear-gradient(90deg,var(--vino),var(--vino3));
+    }
+
+    .indicatorIcon{
+      width:34px;
+      height:34px;
+      flex-basis:34px;
+      border-radius:9px;
+    }
+    .indicatorIcon svg{width:19px;height:19px}
+
+    .indicatorText strong{
+      font-size:42px;
+      letter-spacing:-1.8px;
+      color:#171717;
+    }
+    .indicatorText span{
+      margin-top:8px;
+      font-size:11px;
+      line-height:1.25;
+      color:#8f2947;
+      font-weight:900;
+      text-transform:uppercase;
+      letter-spacing:.25px;
+    }
+
+    /* Dos indicadores altos a la derecha del mapa */
+    .indicatorCard:nth-child(1){grid-column:5;grid-row:1 / span 2}
+    .indicatorCard:nth-child(2){grid-column:5;grid-row:3 / span 2}
+
+    /* Seis indicadores en la franja inferior */
+    .indicatorCard:nth-child(3){grid-column:1;grid-row:5}
+    .indicatorCard:nth-child(4){grid-column:2;grid-row:5}
+    .indicatorCard:nth-child(5){grid-column:3;grid-row:5}
+    .indicatorCard:nth-child(6){grid-column:4;grid-row:5}
+    .indicatorCard:nth-child(7){grid-column:5;grid-row:5}
+    .indicatorCard:nth-child(8){
+      grid-column:4;
+      grid-row:4;
+      align-self:end;
+      height:132px !important;
+      margin-bottom:0;
+      display:none;
+    }
+
+    /* El octavo KPI se integra en la franja inferior mediante una sexta columna real */
+    .indicatorGrid{
+      grid-template-columns:repeat(5,minmax(0,1fr)) 276px;
+    }
+    #viewDiv{right:304px}
+    .indicatorCard:nth-child(1){grid-column:6;grid-row:1 / span 2}
+    .indicatorCard:nth-child(2){grid-column:6;grid-row:3 / span 2}
+    .indicatorCard:nth-child(3){grid-column:1;grid-row:5}
+    .indicatorCard:nth-child(4){grid-column:2;grid-row:5}
+    .indicatorCard:nth-child(5){grid-column:3;grid-row:5}
+    .indicatorCard:nth-child(6){grid-column:4;grid-row:5}
+    .indicatorCard:nth-child(7){grid-column:5;grid-row:5}
+    .indicatorCard:nth-child(8){grid-column:6;grid-row:5;display:flex;height:auto !important}
+
+    /* Herramientas dentro de la esquina superior derecha del mapa */
+    .toolDock{
+      right:318px;
+      top:28px;
+    }
+    .toolPanel{
+      right:318px;
+      top:82px;
+      width:360px;
+      max-height:calc(100% - 274px);
+    }
+
+    /* Los KPI pequeños del filtro quedan secundarios */
+    .kpiGrid{margin-top:12px}
+    .kpi{padding:10px 9px;background:#fafbfc}
+    .kpi strong{font-size:19px}
+
+    @media(max-width:1250px){
+      #viewDiv{right:274px;bottom:168px}
+      .indicatorGrid{grid-template-columns:repeat(5,minmax(0,1fr)) 246px;grid-template-rows:repeat(4,minmax(0,1fr)) 140px}
+      .indicatorText strong{font-size:35px}
+      .indicatorText span{font-size:9px}
+      .toolDock{right:288px}
+      .toolPanel{right:288px}
+    }
+
+    @media(max-width:1000px){
+      .workspace{overflow:auto}
+      #viewDiv{left:10px;right:10px;top:10px;bottom:auto;height:58vh}
+      .dashboardPanel{left:22px;top:22px;width:min(330px,calc(100% - 44px));max-height:48vh}
+      .indicatorSection{position:absolute;left:10px;right:10px;top:calc(58vh + 20px);bottom:auto;height:auto;display:block}
+      .indicatorGrid{position:relative;display:grid;grid-template-columns:repeat(2,1fr);grid-template-rows:none;gap:10px}
+      .indicatorCard:nth-child(n){grid-column:auto;grid-row:auto;min-height:128px}
+      .toolDock{right:22px;top:22px}
+      .toolPanel{right:22px;top:76px;max-height:45vh}
+    }
+
+    @media(max-width:620px){
+      .indicatorGrid{grid-template-columns:1fr}
+      .indicatorCard{min-height:112px}
+      .indicatorText strong{font-size:34px}
+    }
+
+    /* =========================================================
+       ORDEN FINAL DE KPI
+       Mantiene el formato: 2 tarjetas a la derecha y el resto
+       en la franja inferior, continuando de derecha a izquierda.
+       ========================================================= */
+    .indicatorGrid{
+      grid-template-columns:repeat(8,minmax(0,1fr)) 276px !important;
+      grid-template-rows:repeat(4,minmax(0,1fr)) 150px !important;
+      gap:10px !important;
+    }
+
+    .indicatorCard:nth-child(1){
+      grid-column:9 !important;
+      grid-row:1 / span 2 !important;
+    }
+
+    .indicatorCard:nth-child(2){
+      grid-column:9 !important;
+      grid-row:3 / span 2 !important;
+    }
+
+    /* Franja inferior: el orden continúa desde la derecha hacia la izquierda */
+    .indicatorCard:nth-child(3){grid-column:9 !important;grid-row:5 !important}
+    .indicatorCard:nth-child(4){grid-column:8 !important;grid-row:5 !important}
+    .indicatorCard:nth-child(5){grid-column:7 !important;grid-row:5 !important}
+    .indicatorCard:nth-child(6){grid-column:6 !important;grid-row:5 !important}
+    .indicatorCard:nth-child(7){grid-column:5 !important;grid-row:5 !important}
+    .indicatorCard:nth-child(8){grid-column:4 !important;grid-row:5 !important;display:flex !important;height:auto !important}
+    .indicatorCard:nth-child(9){grid-column:3 !important;grid-row:5 !important}
+    .indicatorCard:nth-child(10){grid-column:2 !important;grid-row:5 !important}
+    .indicatorCard:nth-child(11){grid-column:1 !important;grid-row:5 !important}
+
+    .indicatorCard.placeholder .indicatorText strong{
+      color:#98a2b3;
+    }
+
+    .indicatorCard.placeholder{
+      background:linear-gradient(180deg,#fff,#fafbfc);
+    }
+
+    @media(max-width:1500px){
+      .indicatorGrid{
+        grid-template-columns:repeat(8,minmax(0,1fr)) 246px !important;
+      }
+      .indicatorCard{
+        padding:12px 10px !important;
+      }
+      .indicatorIcon{
+        width:29px !important;
+        height:29px !important;
+        flex-basis:29px !important;
+      }
+      .indicatorText strong{
+        font-size:31px !important;
+      }
+      .indicatorText span{
+        font-size:8.5px !important;
+        letter-spacing:.1px !important;
+      }
+    }
+
+    @media(max-width:1000px){
+      .indicatorGrid{
+        grid-template-columns:repeat(2,1fr) !important;
+        grid-template-rows:none !important;
+      }
+      .indicatorCard:nth-child(n){
+        grid-column:auto !important;
+        grid-row:auto !important;
+      }
+    }
+
+    /* =========================================================
+       ACORDEÓN DE LEYENDA DEBAJO DEL FILTRO TERRITORIAL
+       ========================================================= */
+    .dashboardPanel{
+      overflow:visible;
+    }
+
+    .legendAccordion{
+      border-top:1px solid var(--borde);
+      background:#fff;
+      border-radius:0 0 15px 15px;
+      overflow:hidden;
+    }
+
+    .legendToggle{
+      width:100%;
+      height:44px;
+      border:0;
+      border-top:1px solid #eef1f4;
+      background:#fff;
+      color:var(--vino);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:9px;
+      cursor:pointer;
+      font-size:11px;
+      font-weight:900;
+      letter-spacing:.25px;
+      text-transform:uppercase;
+      transition:.18s ease;
+    }
+
+    .legendToggle:hover{
+      background:#fbf3f6;
+    }
+
+    .legendToggle svg{
+      width:18px;
+      height:18px;
+      fill:currentColor;
+      transition:transform .22s ease;
+    }
+
+    .legendAccordion.open .legendToggle svg{
+      transform:rotate(180deg);
+    }
+
+    .legendCollapse{
+      max-height:0;
+      overflow:hidden;
+      transition:max-height .32s ease;
+      background:#fff;
+    }
+
+    .legendAccordion.open .legendCollapse{
+      max-height:420px;
+      border-top:1px solid var(--borde);
+    }
+
+    .legendInside{
+      max-height:390px;
+      overflow:auto;
+      padding:8px 8px 10px;
+      background:#fff;
+    }
+
+    .legendInsideTitle{
+      padding:4px 7px 8px;
+      color:#475467;
+      font-size:10px;
+      font-weight:900;
+      letter-spacing:.35px;
+      text-transform:uppercase;
+    }
+
+    #embeddedLegend .esri-legend{
+      width:100% !important;
+      background:#fff !important;
+      box-shadow:none !important;
+      border:0 !important;
+    }
+
+    #embeddedLegend .esri-legend__layer{
+      border-bottom:1px solid #eef1f4;
+      padding:8px 4px;
+    }
+
+    #embeddedLegend .esri-legend__layer:last-child{
+      border-bottom:0;
+    }
+
+    #embeddedLegend .esri-legend__layer-caption,
+    #embeddedLegend .esri-legend__service-label,
+    #embeddedLegend .esri-legend__layer-title{
+      color:#172033 !important;
+      font-weight:800 !important;
+      font-size:11px !important;
+    }
+
+    #embeddedLegend .esri-legend__layer-body{
+      color:#475467 !important;
+      font-size:10px !important;
+    }
+
+    #embeddedLayerList{
+      margin-top:8px;
+      border-top:1px dashed #d8dee6;
+      padding-top:8px;
+    }
+
+    #embeddedLayerList .esri-layer-list{
+      background:#fff !important;
+      box-shadow:none !important;
+    }
+
+    #embeddedLayerList .esri-layer-list__item{
+      background:#fff !important;
+      border-color:#eef1f4 !important;
+    }
+
+    #embeddedLayerList .esri-layer-list__item-title{
+      font-size:11px !important;
+      font-weight:800 !important;
+      color:#344054 !important;
+    }
+
+    @media(max-width:1000px){
+      .dashboardPanel{
+        max-height:55vh;
+        overflow:auto;
+      }
+
+      .legendAccordion.open .legendCollapse{
+        max-height:300px;
+      }
+
+      .legendInside{
+        max-height:270px;
+      }
+    }
+
+    /* =========================================================
+       AJUSTE FINAL: SOLO LEYENDA Y SIEMPRE POR ENCIMA DE LOS KPI
+       ========================================================= */
+    .dashboardPanel{
+      z-index:80 !important;
+      overflow:visible !important;
+    }
+
+    .legendAccordion{
+      position:relative;
+      z-index:90;
+    }
+
+    .legendAccordion.open{
+      box-shadow:0 18px 36px rgba(15,23,42,.18);
+    }
+
+    .legendCollapse{
+      position:relative;
+      z-index:95;
+      background:#fff;
+    }
+
+    .legendAccordion.open .legendCollapse{
+      max-height:340px;
+    }
+
+    .legendInside{
+      max-height:310px;
+      overflow:auto;
+      padding:8px 8px 12px;
+      background:#fff;
+    }
+
+    .indicatorSection,
+    .indicatorGrid,
+    .indicatorCard{
+      z-index:20 !important;
+    }
+
+    #embeddedLayerList{
+      display:none !important;
+    }
+
+    @media(max-width:1000px){
+      .legendAccordion.open .legendCollapse{
+        max-height:260px;
+      }
+
+      .legendInside{
+        max-height:230px;
+      }
+    }
+
+    /* AJUSTE QUIRÚRGICO: ocultar solo los KPI indicados */
+    .topKpis,
+    .kpiGrid{
+      display:none !important;
+    }
+
+    /* Desglose compacto del indicador BAE */
+    .indicatorCard.baeCard{
+      justify-content:flex-start;
+      padding-top:12px !important;
+      padding-bottom:10px !important;
+      gap:5px;
+    }
+
+    .baeCard .indicatorIcon{
+      width:25px !important;
+      height:25px !important;
+      flex-basis:25px !important;
+      border-radius:7px;
+    }
+
+    .baeCard .indicatorIcon svg{
+      width:14px !important;
+      height:14px !important;
+    }
+
+    .baeCard .indicatorText strong{
+      font-size:28px !important;
+      line-height:1 !important;
+    }
+
+    .baeCard .indicatorText span{
+      margin-top:4px;
+      font-size:8px !important;
+      line-height:1.1;
+    }
+
+    .baeBreakdown{
+      width:100%;
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:5px;
+      margin-top:4px;
+    }
+
+    .baeMini{
+      min-width:0;
+      display:grid;
+      grid-template-columns:20px minmax(0,1fr);
+      align-items:center;
+      gap:5px;
+      padding:5px 6px;
+      border:1px solid #ead8df;
+      border-radius:8px;
+      background:#fcf7f9;
+    }
+
+    .baeMiniIcon{
+      width:20px;
+      height:20px;
+      border-radius:6px;
+      display:grid;
+      place-items:center;
+      color:var(--vino);
+      background:#f4e2e9;
+    }
+
+    .baeMiniIcon svg{
+      width:11px;
+      height:11px;
+      fill:currentColor;
+    }
+
+    .baeMiniText{min-width:0}
+    .baeMiniText strong{
+      display:block;
+      color:#172033;
+      font-size:13px;
+      line-height:1;
+      font-weight:900;
+    }
+
+    .baeMiniText span{
+      display:block;
+      margin-top:3px;
+      color:#7f1737;
+      font-size:6.8px;
+      line-height:1.05;
+      font-weight:900;
+      text-transform:uppercase;
+      white-space:normal;
+    }
+
+
+    /* LEYENDA FLOTANTE: visible al iniciar y separada del filtro territorial */
+    #legendPanel{
+      width:320px;
+      max-height:calc(100% - 260px);
+    }
+    #legendWrap .esri-legend{
+      width:100% !important;
+      box-shadow:none !important;
+      border:0 !important;
+    }
+    #legendWrap .esri-legend__layer{
+      border-bottom:1px solid #eef1f4;
+      padding:8px 6px;
+    }
+    #legendWrap .esri-legend__layer:last-child{border-bottom:0}
+
+    /* =========================================================
+       LEYENDA INFERIOR IZQUIERDA
+       El botón sale del dock superior. La ventana abre hacia arriba
+       y su altura máxima evita que alcance el filtro territorial.
+       ========================================================= */
+    .legendDock{
+      position:absolute;
+      left:28px;
+      bottom:192px;
+      z-index:36;
+      display:flex;
+    }
+
+    .legendDock .toolBtn{
+      width:44px;
+      height:44px;
+    }
+
+    #legendPanel{
+      left:28px !important;
+      right:auto !important;
+      top:auto !important;
+      bottom:246px !important;
+      width:320px !important;
+      max-height:min(360px, calc(100% - 506px)) !important;
+    }
+
+    @media(max-width:1250px){
+      .legendDock{bottom:182px}
+      #legendPanel{
+        bottom:236px !important;
+        max-height:min(340px, calc(100% - 496px)) !important;
+      }
+    }
+
+    @media(max-width:1000px){
+      .legendDock{
+        left:22px;
+        bottom:auto;
+        top:calc(58vh - 48px);
+      }
+      #legendPanel{
+        left:22px !important;
+        right:auto !important;
+        top:auto !important;
+        bottom:calc(42vh + 58px) !important;
+        width:min(320px, calc(100% - 44px)) !important;
+        max-height:220px !important;
+      }
+    }
+
+  
+
+    /* =========================================================
+       AJUSTE FINAL · TARJETAS PROPORCIONALES
+       - Las 11 tarjetas usan exactamente la misma anchura y altura.
+       - Se conserva el orden actual: 2 al lado derecho y 9 abajo.
+       - El mapa gana espacio al reducirse la columna lateral.
+       - No se altera ninguna capa, filtro, indicador o funcionalidad.
+       ========================================================= */
+    @media (min-width:1001px){
+      #viewDiv{
+        right:calc(11.111111% + 12px) !important;
+        bottom:174px !important;
+      }
+
+      .indicatorSection{
+        inset:14px !important;
+      }
+
+      .indicatorGrid{
+        grid-template-columns:repeat(9,minmax(0,1fr)) !important;
+        grid-template-rows:150px 150px minmax(0,1fr) 150px !important;
+        gap:10px !important;
+      }
+
+      .indicatorCard{
+        width:auto !important;
+        height:150px !important;
+        min-width:0 !important;
+        min-height:150px !important;
+        max-height:150px !important;
+        align-self:stretch !important;
+        justify-self:stretch !important;
+      }
+
+      /* Dos tarjetas laterales, ahora del mismo tamaño que las inferiores */
+      .indicatorCard:nth-child(1){
+        grid-column:9 !important;
+        grid-row:1 !important;
+      }
+      .indicatorCard:nth-child(2){
+        grid-column:9 !important;
+        grid-row:2 !important;
+      }
+
+      /* Franja inferior: se mantiene el orden de derecha a izquierda */
+      .indicatorCard:nth-child(3){grid-column:9 !important;grid-row:4 !important}
+      .indicatorCard:nth-child(4){grid-column:8 !important;grid-row:4 !important}
+      .indicatorCard:nth-child(5){grid-column:7 !important;grid-row:4 !important}
+      .indicatorCard:nth-child(6){grid-column:6 !important;grid-row:4 !important}
+      .indicatorCard:nth-child(7){grid-column:5 !important;grid-row:4 !important}
+      .indicatorCard:nth-child(8){grid-column:4 !important;grid-row:4 !important}
+      .indicatorCard:nth-child(9){grid-column:3 !important;grid-row:4 !important}
+      .indicatorCard:nth-child(10){grid-column:2 !important;grid-row:4 !important}
+      .indicatorCard:nth-child(11){grid-column:1 !important;grid-row:4 !important}
+
+      /* Las herramientas continúan en la esquina superior derecha del mapa */
+      .toolDock{
+        right:calc(11.111111% + 26px) !important;
+      }
+      .toolPanel:not(#legendPanel){
+        right:calc(11.111111% + 26px) !important;
+      }
+    }
+
+  
+    /* =========================================================
+       ORDEN DEFINITIVO DE INDICADORES
+       10 tarjetas inferiores + 3 tarjetas laterales
+       ========================================================= */
+    @media (min-width:1001px){
+      #viewDiv{
+        right:calc(10% + 12px) !important;
+        bottom:174px !important;
+      }
+
+      .indicatorSection{
+        inset:14px !important;
+      }
+
+      .indicatorGrid{
+        grid-template-columns:repeat(10,minmax(0,1fr)) !important;
+        grid-template-rows:150px 150px 150px minmax(0,1fr) 150px !important;
+        gap:10px !important;
+      }
+
+      .indicatorCard{
+        position:relative !important;
+        inset:auto !important;
+        width:auto !important;
+        height:150px !important;
+        min-width:0 !important;
+        min-height:150px !important;
+        max-height:150px !important;
+        padding:16px 8px 12px !important;
+
+        display:grid !important;
+        grid-template-columns:auto auto !important;
+        grid-template-rows:minmax(0,1fr) auto !important;
+        align-items:center !important;
+        align-content:stretch !important;
+        justify-content:center !important;
+        column-gap:7px !important;
+        row-gap:7px !important;
+        overflow:hidden !important;
+      }
+
+      .indicatorCard .indicatorIcon{
+        grid-column:1 !important;
+        grid-row:1 !important;
+        width:29px !important;
+        height:29px !important;
+        min-width:29px !important;
+        flex:0 0 29px !important;
+        margin:0 !important;
+        align-self:center !important;
+        justify-self:end !important;
+        border-radius:8px !important;
+      }
+
+      .indicatorCard .indicatorIcon svg{
+        width:16px !important;
+        height:16px !important;
+      }
+
+      .indicatorCard .indicatorText{
+        display:contents !important;
+      }
+
+      .indicatorCard .indicatorText strong{
+        grid-column:2 !important;
+        grid-row:1 !important;
+        margin:0 !important;
+        align-self:center !important;
+        justify-self:start !important;
+        font-size:29px !important;
+        line-height:1 !important;
+        font-weight:800 !important;
+        letter-spacing:-1px !important;
+        white-space:nowrap !important;
+      }
+
+      .indicatorCard .indicatorText span{
+        grid-column:1 / span 2 !important;
+        grid-row:2 !important;
+        width:100% !important;
+        min-height:42px !important;
+        margin:0 !important;
+        display:flex !important;
+        align-items:flex-end !important;
+        justify-content:center !important;
+        text-align:center !important;
+        font-size:11.4px !important;
+        line-height:1.16 !important;
+        font-weight:900 !important;
+        letter-spacing:.02px !important;
+        text-transform:uppercase !important;
+        overflow-wrap:anywhere !important;
+      }
+
+      /* 10 tarjetas inferiores, exactamente en el orden solicitado */
+      .indicatorCard:nth-child(1){grid-column:1 !important;grid-row:5 !important}
+      .indicatorCard:nth-child(2){grid-column:2 !important;grid-row:5 !important}
+      .indicatorCard:nth-child(3){grid-column:3 !important;grid-row:5 !important}
+      .indicatorCard:nth-child(4){grid-column:4 !important;grid-row:5 !important}
+      .indicatorCard:nth-child(5){grid-column:5 !important;grid-row:5 !important}
+      .indicatorCard:nth-child(6){grid-column:6 !important;grid-row:5 !important}
+      .indicatorCard:nth-child(7){grid-column:7 !important;grid-row:5 !important}
+      .indicatorCard:nth-child(8){grid-column:8 !important;grid-row:5 !important}
+      .indicatorCard:nth-child(9){grid-column:9 !important;grid-row:5 !important}
+      .indicatorCard:nth-child(10){grid-column:10 !important;grid-row:5 !important}
+
+      /* Continuación del orden en la columna derecha, de abajo hacia arriba */
+      .indicatorCard:nth-child(11){
+        grid-column:10 !important;
+        grid-row:3 !important;
+      }
+
+      .indicatorCard:nth-child(12){
+        grid-column:10 !important;
+        grid-row:2 !important;
+      }
+
+      .indicatorCard:nth-child(13){
+        grid-column:10 !important;
+        grid-row:1 !important;
+      }
+
+      .toolDock{
+        right:calc(10% + 26px) !important;
+      }
+
+      .toolPanel:not(#legendPanel){
+        right:calc(10% + 26px) !important;
+      }
+    }
+
+    @media (min-width:1001px) and (max-width:1450px){
+      .indicatorCard{
+        padding-left:6px !important;
+        padding-right:6px !important;
+      }
+
+      .indicatorCard .indicatorIcon{
+        width:26px !important;
+        height:26px !important;
+        min-width:26px !important;
+        flex-basis:26px !important;
+      }
+
+      .indicatorCard .indicatorText strong{
+        font-size:25px !important;
+      }
+
+      .indicatorCard .indicatorText span{
+        font-size:6.9px !important;
+      }
+    }
+
+  
+    /* =========================================================
+       AJUSTE PROPORCIONAL · SIN ESPACIO VACÍO EN LA COLUMNA DERECHA
+       Las tres tarjetas laterales ocupan toda la altura disponible
+       del mapa y terminan alineadas con la franja inferior.
+       ========================================================= */
+    @media (min-width:1001px){
+      .indicatorGrid{
+        grid-template-rows:repeat(3,minmax(0,1fr)) 150px !important;
+      }
+
+      /* Franja inferior */
+      .indicatorCard:nth-child(1),
+      .indicatorCard:nth-child(2),
+      .indicatorCard:nth-child(3),
+      .indicatorCard:nth-child(4),
+      .indicatorCard:nth-child(5),
+      .indicatorCard:nth-child(6),
+      .indicatorCard:nth-child(7),
+      .indicatorCard:nth-child(8),
+      .indicatorCard:nth-child(9),
+      .indicatorCard:nth-child(10){
+        grid-row:4 !important;
+      }
+
+      /* Columna derecha: tres tarjetas iguales y sin huecos */
+      .indicatorCard:nth-child(11){
+        grid-column:10 !important;
+        grid-row:3 !important;
+        height:auto !important;
+        min-height:0 !important;
+        max-height:none !important;
+      }
+
+      .indicatorCard:nth-child(12){
+        grid-column:10 !important;
+        grid-row:2 !important;
+        height:auto !important;
+        min-height:0 !important;
+        max-height:none !important;
+      }
+
+      .indicatorCard:nth-child(13){
+        grid-column:10 !important;
+        grid-row:1 !important;
+        height:auto !important;
+        min-height:0 !important;
+        max-height:none !important;
+      }
+    }
+
+  
+    /* =========================================================
+       ÁRBOL DE CAPAS REORDENABLE
+       ========================================================= */
+    #layersWrap{
+      background:#fff;
+      min-height:220px;
+      overflow:auto;
+    }
+
+    .customLayerTree{
+      padding:8px;
+      user-select:none;
+    }
+
+    .layerTreeGroup{
+      margin:0 0 7px;
+      border:1px solid #e6e9ee;
+      border-radius:10px;
+      overflow:hidden;
+      background:#fff;
+    }
+
+    .layerTreeRow{
+      --tree-level:0;
+      position:relative;
+      min-height:42px;
+      padding:6px 9px 6px calc(9px + (var(--tree-level) * 16px));
+      display:grid;
+      grid-template-columns:20px 24px minmax(0,1fr);
+      align-items:center;
+      gap:7px;
+      border-bottom:1px solid #eef1f4;
+      background:#fff;
+      transition:background .14s ease,opacity .14s ease;
+    }
+
+    .layerTreeGroupRow{
+      grid-template-columns:20px 24px 24px minmax(0,1fr);
+      background:#f8fafc;
+    }
+
+    .layerTreeChildren .layerTreeRow:last-child{
+      border-bottom:0;
+    }
+
+    .layerTreeRow:hover{
+      background:#fbf3f6;
+    }
+
+    .layerTreeRow.isHidden .layerTreeTitle{
+      opacity:.52;
+    }
+
+    .layerTreeTitle{
+      min-width:0;
+      color:#293548;
+      font-size:11px;
+      line-height:1.25;
+      font-weight:800;
+      overflow-wrap:anywhere;
+    }
+
+    .layerTreeGroupRow .layerTreeTitle{
+      color:var(--vino);
+      font-size:11px;
+      font-weight:900;
+      letter-spacing:.25px;
+    }
+
+    .layerTreeCheck{
+      width:16px;
+      height:16px;
+      margin:0;
+      accent-color:var(--vino);
+      cursor:pointer;
+    }
+
+    .layerTreeToggle{
+      width:24px;
+      height:24px;
+      padding:0;
+      display:grid;
+      place-items:center;
+      border:0;
+      border-radius:6px;
+      background:transparent;
+      color:#667085;
+      cursor:pointer;
+    }
+
+    .layerTreeToggle:hover{
+      background:#f1e5ea;
+      color:var(--vino);
+    }
+
+    .layerTreeToggle span{
+      display:block;
+      font-size:14px;
+      line-height:1;
+      transition:transform .15s ease;
+    }
+
+    .layerTreeToggle[aria-expanded="false"] span{
+      transform:rotate(-90deg);
+    }
+
+    .layerTreeHandle{
+      width:20px;
+      height:26px;
+      display:grid;
+      grid-template-columns:repeat(2,4px);
+      grid-template-rows:repeat(3,4px);
+      place-content:center;
+      gap:3px;
+      border-radius:6px;
+      cursor:grab;
+      touch-action:none;
+    }
+
+    .layerTreeHandle:hover{
+      background:#f1e5ea;
+    }
+
+    .layerTreeHandle:active{
+      cursor:grabbing;
+    }
+
+    .layerTreeHandle i{
+      display:block;
+      width:4px;
+      height:4px;
+      border-radius:50%;
+      background:#8992a3;
+      pointer-events:none;
+    }
+
+    .layerTreeRow.dragging{
+      opacity:.42;
+    }
+
+    .layerTreeRow.dropBefore::before,
+    .layerTreeRow.dropAfter::after{
+      content:"";
+      position:absolute;
+      left:8px;
+      right:8px;
+      height:3px;
+      border-radius:999px;
+      background:var(--vino3);
+      z-index:4;
+    }
+
+    .layerTreeRow.dropBefore::before{
+      top:-2px;
+    }
+
+    .layerTreeRow.dropAfter::after{
+      bottom:-2px;
+    }
+
+    .layerTreeRow.dropInside{
+      outline:2px solid rgba(166,38,80,.55);
+      outline-offset:-2px;
+      background:#fbf0f4;
+    }
+
+    .layerTreeChildren[hidden]{
+      display:none;
+    }
+
+  
+    /* =========================================================
+       HERRAMIENTA PRESUPUESTO · FORMATO COMPACTO
+       ========================================================= */
+    #budgetPanel{
+      width:380px !important;
+      max-width:calc(100% - 40px) !important;
+      max-height:320px !important;
+    }
+
+    .budgetPanelBody{
+      min-height:0 !important;
+      max-height:268px !important;
+      padding:8px !important;
+      overflow:auto !important;
+      background:#f7f8fa;
+      display:flex;
+      align-items:flex-start;
+      justify-content:center;
+    }
+
+    .budgetImage{
+      display:block;
+      width:100%;
+      height:auto;
+      max-width:100%;
+      max-height:245px;
+      object-fit:contain;
+      border-radius:8px;
+      background:#fff;
+      box-shadow:0 6px 16px rgba(15,23,42,.10);
+    }
+
+    @media(max-width:1000px){
+      #budgetPanel{
+        width:360px !important;
+        max-width:calc(100% - 44px) !important;
+        max-height:300px !important;
+      }
+
+      .budgetPanelBody{
+        max-height:248px !important;
+      }
+
+      .budgetImage{
+        max-height:225px;
+      }
+    }
+
+    @media(max-width:560px){
+      #budgetPanel{
+        width:calc(100% - 16px) !important;
+        max-width:none !important;
+        max-height:280px !important;
+      }
+
+      .budgetPanelBody{
+        padding:6px !important;
+        max-height:228px !important;
+      }
+
+      .budgetImage{
+        max-height:205px;
+      }
+    }
+
+  
+    /* Símbolo monetario del botón Presupuesto */
+    .budgetCurrencyIcon{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      width:30px;
+      height:30px;
+      font-size:14px;
+      line-height:1;
+      font-weight:950;
+      letter-spacing:-.6px;
+      color:currentColor;
+      font-family:Arial,"Segoe UI",sans-serif;
+    }
+
+  
+    /* Presupuestos separados: moderado y severo */
+    #budgetModeradoPanel,
+    #budgetSeveroPanel{
+      width:380px !important;
+      max-width:calc(100% - 40px) !important;
+      max-height:320px !important;
+    }
+
+    .budgetCurrencyIconModerado{
+      color:#8a9099 !important;
+    }
+
+    @media(max-width:1000px){
+      #budgetModeradoPanel,
+      #budgetSeveroPanel{
+        width:360px !important;
+        max-width:calc(100% - 44px) !important;
+        max-height:300px !important;
+      }
+    }
+
+    @media(max-width:560px){
+      #budgetModeradoPanel,
+      #budgetSeveroPanel{
+        width:calc(100% - 16px) !important;
+        max-width:none !important;
+        max-height:280px !important;
+      }
+    }
+
+  
+    /* =========================================================
+       PRESUPUESTOS · MEJORA VISUAL
+       ========================================================= */
+
+    /* Botón moderado siempre en gama ploma, incluso cuando está activo */
+    .budgetModeradoBtn{
+      color:#7b828c !important;
+      border-color:#c8cdd4 !important;
+      background:#ffffff !important;
+    }
+
+    .budgetModeradoBtn:hover{
+      color:#5f6670 !important;
+      background:#f0f2f4 !important;
+      border-color:#aeb4bc !important;
+    }
+
+    .budgetModeradoBtn.active{
+      color:#ffffff !important;
+      background:#747b85 !important;
+      border-color:#747b85 !important;
+      box-shadow:0 8px 18px rgba(76,84,94,.24) !important;
+    }
+
+    .budgetModeradoBtn.active .budgetCurrencyIconModerado{
+      color:#ffffff !important;
+    }
+
+    /* Severo conserva el color institucional */
+    .budgetSeveroBtn.active{
+      color:#ffffff !important;
+      background:var(--vino) !important;
+      border-color:var(--vino) !important;
+    }
+
+    /* Encabezados diferenciados */
+    .budgetHeadModerado{
+      background:linear-gradient(90deg,#6f7680,#8a919a) !important;
+    }
+
+    .budgetHeadSevero{
+      background:linear-gradient(90deg,var(--vino),#a82250) !important;
+    }
+
+    #budgetModeradoPanel,
+    #budgetSeveroPanel{
+      width:400px !important;
+      max-width:calc(100% - 40px) !important;
+      max-height:330px !important;
+      overflow:hidden !important;
+    }
+
+    #budgetModeradoPanel .budgetPanelBody,
+    #budgetSeveroPanel .budgetPanelBody{
+      min-height:0 !important;
+      max-height:278px !important;
+      padding:10px !important;
+      overflow:hidden !important;
+      background:#eef1f4 !important;
+      display:block !important;
+    }
+
+    .budgetImageViewport{
+      width:100%;
+      height:248px;
+      overflow:hidden;
+      position:relative;
+      border-radius:10px;
+      background:#ffffff;
+      box-shadow:0 8px 22px rgba(15,23,42,.13);
+    }
+
+    /*
+      Las imágenes de Drive contienen bastante margen blanco.
+      Se amplían dentro del visor para que las tablas sean protagonistas.
+    */
+    .budgetImageViewport .budgetImage{
+      display:block !important;
+      width:150% !important;
+      max-width:none !important;
+      height:auto !important;
+      max-height:none !important;
+      margin-left:-25% !important;
+      margin-top:-4px !important;
+      object-fit:contain !important;
+      border-radius:0 !important;
+      box-shadow:none !important;
+      background:#ffffff !important;
+    }
+
+    @media(max-width:1000px){
+      #budgetModeradoPanel,
+      #budgetSeveroPanel{
+        width:390px !important;
+        max-height:320px !important;
+      }
+
+      .budgetImageViewport{
+        height:238px;
+      }
+
+      .budgetImageViewport .budgetImage{
+        width:148% !important;
+        margin-left:-24% !important;
+      }
+    }
+
+    @media(max-width:560px){
+      #budgetModeradoPanel,
+      #budgetSeveroPanel{
+        width:calc(100% - 16px) !important;
+        max-width:none !important;
+        max-height:310px !important;
+      }
+
+      #budgetModeradoPanel .budgetPanelBody,
+      #budgetSeveroPanel .budgetPanelBody{
+        padding:8px !important;
+        max-height:258px !important;
+      }
+
+      .budgetImageViewport{
+        height:230px;
+      }
+
+      .budgetImageViewport .budgetImage{
+        width:142% !important;
+        margin-left:-21% !important;
+      }
+    }
+
+  
+    /* =========================================================
+       AJUSTE FINAL · PRESUPUESTOS LEGIBLES SIN RECORTE HORIZONTAL
+       ========================================================= */
+    #budgetModeradoPanel,
+    #budgetSeveroPanel{
+      width:420px !important;
+      max-width:calc(100% - 32px) !important;
+      max-height:430px !important;
+    }
+
+    #budgetModeradoPanel .budgetPanelBody,
+    #budgetSeveroPanel .budgetPanelBody{
+      padding:9px !important;
+      max-height:378px !important;
+      overflow:hidden !important;
+      background:#eef1f4 !important;
+    }
+
+    .budgetImageViewport{
+      width:100% !important;
+      height:350px !important;
+      overflow-x:hidden !important;
+      overflow-y:auto !important;
+      border-radius:10px !important;
+      background:#ffffff !important;
+      scrollbar-width:thin;
+      scrollbar-color:#aeb4bc #eef1f4;
+    }
+
+    .budgetImageViewport .budgetImage{
+      display:block !important;
+      width:100% !important;
+      max-width:100% !important;
+      height:auto !important;
+      max-height:none !important;
+      margin:0 !important;
+      object-fit:contain !important;
+      object-position:top center !important;
+      transform:none !important;
+    }
+
+    .budgetImageViewport::-webkit-scrollbar{
+      width:7px;
+    }
+
+    .budgetImageViewport::-webkit-scrollbar-track{
+      background:#eef1f4;
+      border-radius:999px;
+    }
+
+    .budgetImageViewport::-webkit-scrollbar-thumb{
+      background:#aeb4bc;
+      border-radius:999px;
+    }
+
+    @media(max-width:560px){
+      #budgetModeradoPanel,
+      #budgetSeveroPanel{
+        width:calc(100% - 16px) !important;
+        max-width:none !important;
+        max-height:400px !important;
+      }
+
+      #budgetModeradoPanel .budgetPanelBody,
+      #budgetSeveroPanel .budgetPanelBody{
+        max-height:348px !important;
+        padding:7px !important;
+      }
+
+      .budgetImageViewport{
+        height:320px !important;
+      }
+    }
+
+  
+    /* Jerarquía interna VULNERABILIDAD > PROYECTOS */
+    .layerTreeNestedGroup{
+      background:#fff;
+      border-bottom:1px solid #eef1f4;
+    }
+
+    .layerTreeSubgroupRow{
+      background:#f4f6f8;
+    }
+
+    .layerTreeNestedChildren{
+      margin-left:20px;
+      border-left:2px solid #e3e7ec;
+    }
+
+    .layerTreeSubgroupRow .layerTreeTitle{
+      color:#4b5565;
+      font-weight:900;
+    }
+
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">
+        <h1>Despliegue del MVCS ante el desafío de “El Niño”</h1>
+        <p><em>Prevención, seguimiento y respuesta en la región Piura</em></p>
+      </div>
+      <div class="topKpis">
+        <div class="topKpi"><span>Ámbito</span><strong>Piura</strong></div>
+        <div class="topKpi"><span>Provincia</span><strong id="topProvincia">Todas</strong></div>
+        <div class="topKpi"><span>Distrito</span><strong id="topDistrito">Todos</strong></div>
+      </div>
+    </header>
+
+    <main class="workspace">
+      <div id="viewDiv"></div>
+
+      <aside class="dashboardPanel">
+        <div class="panelHead">
+          <div>
+            <h2>Filtro territorial</h2>
+            <p>Los proyectos y límites se mantienen restringidos al departamento de Piura.</p>
+          </div>
+          <div class="badge">PIURA</div>
+        </div>
+        <div class="panelBody">
+          <div class="filters">
+            <div class="field">
+              <label for="selProvincia">Provincia</label>
+              <select id="selProvincia" disabled><option value="">Todas las provincias</option></select>
+            </div>
+            <div class="field">
+              <label for="selDistrito">Distrito</label>
+              <select id="selDistrito" disabled><option value="">Todos los distritos</option></select>
+            </div>
+          </div>
+
+          <div class="actions">
+            <button id="btnLimpiar" class="btn btnPrimary" type="button">Restablecer Piura</button>
+            <button id="btnZoom" class="btn btnGhost" type="button">Acercar</button>
+          </div>
+
+          <div class="kpiGrid">
+            <div class="kpi"><span>Proyectos</span><strong id="kpiProyectos">—</strong><small>en el ámbito visible</small></div>
+            <div class="kpi"><span>Provincias</span><strong id="kpiProvincias">—</strong><small>departamento de Piura</small></div>
+            <div class="kpi"><span>Distritos</span><strong id="kpiDistritos">—</strong><small>según selección</small></div>
+          </div>
+
+        </div>
+
+      </aside>
+
+          <section class="indicatorSection" aria-label="Indicadores de servicios GIS">
+            <div class="indicatorTitle"><strong>Indicadores</strong><span>Totales publicados</span></div>
+
+            
+            <div class="indicatorGrid">
+
+              <!-- 1 · SARES -->
+              <div class="indicatorCard loading" data-indicator="sares">
+                <div class="indicatorIcon">
+                  <svg viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 0-7 7c0 5.2 7 13 7 13s7-7.8 7-13a7 7 0 0 0-7-7Zm0 10.5A3.5 3.5 0 1 1 12 5a3.5 3.5 0 0 1 0 7.5Z"/></svg>
+                </div>
+                <div class="indicatorText">
+                  <strong id="indSares">—</strong>
+                  <span>SARES</span>
+                </div>
+              </div>
+
+              <!-- 2 · OBRAS EN EJECUCIÓN -->
+              <div class="indicatorCard loading" data-indicator="obrasEjecucion">
+                <div class="indicatorIcon">
+                  <svg viewBox="0 0 24 24"><path d="M2 20h20v2H2v-2Zm3-2V8l7-5 7 5v10h-4v-6H9v6H5Zm6-2h2v-4h-2v4Z"/></svg>
+                </div>
+                <div class="indicatorText">
+                  <strong id="indObrasEjecucion">—</strong>
+                  <span>Obras en ejecución MVCS</span>
+                </div>
+              </div>
+
+              <!-- 3 · OBRAS CULMINADAS -->
+              <div class="indicatorCard loading" data-indicator="obrasCulminadas">
+                <div class="indicatorIcon">
+                  <svg viewBox="0 0 24 24"><path d="M3 20h18v2H3v-2Zm2-9 4-4 3 3 5-6 2 2-7 8-3-3-2 2v5H5v-7Z"/></svg>
+                </div>
+                <div class="indicatorText">
+                  <strong id="indObrasCulminadas">—</strong>
+                  <span>Obras culminadas MVCS</span>
+                </div>
+              </div>
+
+              <!-- 4 · POTENCIALES BENEFICIARIOS BAE -->
+              <div class="indicatorCard loading" data-indicator="baePotencial">
+                <div class="indicatorIcon">
+                  <svg viewBox="0 0 24 24"><path d="M12 2a5 5 0 1 1 0 10 5 5 0 0 1 0-10Zm-8 19a8 8 0 0 1 16 0H4Zm15-12h2v3h3v2h-3v3h-2v-3h-3v-2h3V9Z"/></svg>
+                </div>
+                <div class="indicatorText">
+                  <strong id="indBaePotencial">—</strong>
+                  <span>Bonos BAE · Potenciales beneficiarios</span>
+                </div>
+              </div>
+
+              <!-- 5 · BENEFICIARIOS BAE -->
+              <div class="indicatorCard loading" data-indicator="baeBeneficiario">
+                <div class="indicatorIcon">
+                  <svg viewBox="0 0 24 24"><path d="M12 2a5 5 0 1 1 0 10 5 5 0 0 1 0-10Zm-8 19a8 8 0 0 1 16 0H4Zm16.6-7.8 1.4 1.4-5.7 5.7-3.3-3.3 1.4-1.4 1.9 1.9 4.3-4.3Z"/></svg>
+                </div>
+                <div class="indicatorText">
+                  <strong id="indBaeBeneficiario">—</strong>
+                  <span>Bonos BAE · Beneficiarios</span>
+                </div>
+              </div>
+
+              <!-- 6 · MAQUINARIAS LIMPIEZA Y DESCOLMATACIÓN -->
+              <div class="indicatorCard loading" data-indicator="maquinariaLimpieza">
+                <div class="indicatorIcon">
+                  <svg viewBox="0 0 24 24"><path d="M3 15h2l2-6h7l2 3h3l2 3v4h-2a3 3 0 0 1-6 0H9a3 3 0 0 1-6 0H2v-2h1v-2Zm3 1a2 2 0 1 0 0 4 2 2 0 0 0 0-4Zm10 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4ZM9 11l-1 3h6l-2-3H9Z"/></svg>
+                </div>
+                <div class="indicatorText">
+                  <strong id="indMaquinariaLimpieza">—</strong>
+                  <span>Maquinarias · Limpieza, descolmatación y transitabilidad</span>
+                </div>
+              </div>
+
+              <!-- 7 · MAQUINARIAS SANEAMIENTO Y DRENAJE · PENDIENTE -->
+              <div class="indicatorCard loading" data-indicator="maquinariaSaneamientoDrenaje">
+                <div class="indicatorIcon">
+                  <svg viewBox="0 0 24 24"><path d="M4 4h16v4H4V4Zm2 6h12v10H6V10Zm3 2v6h2v-6H9Zm4 0v6h2v-6h-2Z"/></svg>
+                </div>
+                <div class="indicatorText">
+                  <strong id="indMaquinariaSaneamientoDrenaje">—</strong>
+                  <span>Maquinarias · Servicio de saneamiento y drenaje</span>
+                </div>
+              </div>
+
+              <!-- 8 · INTERVENCIONES EJECUTADAS -->
+              <div class="indicatorCard loading" data-indicator="intervencionesEjecutadas">
+                <div class="indicatorIcon">
+                  <svg viewBox="0 0 24 24"><path d="M4 3h16v18H4V3Zm3 4v2h10V7H7Zm0 4v2h6v-2H7Zm8.5 6.5-2.5-2.5 1.4-1.4 1.1 1.1 3.1-3.1L20 13l-4.5 4.5Z"/></svg>
+                </div>
+                <div class="indicatorText">
+                  <strong id="indIntervencionesEjecutadas">—</strong>
+                  <span>Intervenciones ejecutadas</span>
+                </div>
+              </div>
+
+              <!-- 9 · INTERVENCIONES EN EJECUCIÓN -->
+              <div class="indicatorCard loading" data-indicator="intervencionesEjecucion">
+                <div class="indicatorIcon">
+                  <svg viewBox="0 0 24 24"><path d="M4 3h16v18H4V3Zm3 4v2h10V7H7Zm0 4v2h7v-2H7Zm0 4v2h5v-2H7Zm9-4 3 3-3 3v-2h-3v-2h3v-2Z"/></svg>
+                </div>
+                <div class="indicatorText">
+                  <strong id="indIntervencionesEjecucion">—</strong>
+                  <span>Intervenciones en ejecución</span>
+                </div>
+              </div>
+
+              <!-- 10 · INTERVENCIONES PROGRAMADAS -->
+              <div class="indicatorCard loading" data-indicator="intervencionesProgramadas">
+                <div class="indicatorIcon">
+                  <svg viewBox="0 0 24 24"><path d="M5 3h2v2h10V3h2v2h2v16H3V5h2V3Zm14 7H5v9h14v-9ZM7 12h4v2H7v-2Zm0 4h7v2H7v-2Z"/></svg>
+                </div>
+                <div class="indicatorText">
+                  <strong id="indIntervencionesProgramadas">—</strong>
+                  <span>Intervenciones maquinarias programadas · Escenario moderado</span>
+                </div>
+              </div>
+
+              <!-- 11 · PUNTOS CRÍTICOS PRIORIZADOS · PENDIENTE -->
+              <div class="indicatorCard loading" data-indicator="puntosCriticosPriorizados">
+                <div class="indicatorIcon">
+                  <svg viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 0-7 7c0 5.1 7 13 7 13s7-7.9 7-13a7 7 0 0 0-7-7Zm0 4 1.1 2.2 2.4.4-1.8 1.7.4 2.4-2.1-1.1-2.1 1.1.4-2.4-1.8-1.7 2.4-.4L12 6Z"/></svg>
+                </div>
+                <div class="indicatorText">
+                  <strong id="indPuntosCriticosPriorizados">—</strong>
+                  <span>Puntos críticos priorizados</span>
+                </div>
+              </div>
+
+              <!-- 12 · PUNTOS CRÍTICOS -->
+              <div class="indicatorCard placeholder" data-indicator="puntosCriticos">
+                <div class="indicatorIcon">
+                  <svg viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 0-7 7c0 5.1 7 13 7 13s7-7.9 7-13a7 7 0 0 0-7-7Zm0 4a3 3 0 1 1 0 6 3 3 0 0 1 0-6Z"/></svg>
+                </div>
+                <div class="indicatorText">
+                  <strong id="indPuntosCriticos">—</strong>
+                  <span>Puntos críticos</span>
+                </div>
+              </div>
+
+              <!-- 13 · ZONAS EXPUESTAS AL PELIGRO -->
+              <div class="indicatorCard loading" data-indicator="zonasExpuestas">
+                <div class="indicatorIcon">
+                  <svg viewBox="0 0 24 24"><path d="M12 2 1 21h22L12 2Zm0 5 6.1 11H5.9L12 7Zm-1 3v4h2v-4h-2Zm0 6v2h2v-2h-2Z"/></svg>
+                </div>
+                <div class="indicatorText">
+                  <strong id="indZonasExpuestas">—</strong>
+                  <span>Zonas expuestas al peligro</span>
+                </div>
+              </div>
+
+            </div>
+
+          </section>
+
+      <div class="toolDock" aria-label="Herramientas del mapa">
+        <button id="btnLayers" class="toolBtn" type="button" title="Lista de capas" aria-label="Lista de capas">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 2.8 8 12 13l9.2-5L12 3Zm-7.4 8.2L12 15.3l7.4-4.1 1.8 1L12 17.3l-9.2-5.1 1.8-1Zm0 4L12 19.3l7.4-4.1 1.8 1L12 21.3l-9.2-5.1 1.8-1Z"/></svg>
+        </button>
+        <button id="btnBudgetModerado" class="toolBtn budgetModeradoBtn" type="button" title="Presupuesto · Maquinarias escenario moderado" aria-label="Presupuesto · Maquinarias escenario moderado">
+          <span class="budgetCurrencyIcon budgetCurrencyIconModerado" aria-hidden="true">S/.</span>
+        </button>
+        <button id="btnBudgetSevero" class="toolBtn budgetSeveroBtn" type="button" title="Presupuesto · Maquinarias escenario severo" aria-label="Presupuesto · Maquinarias escenario severo">
+          <span class="budgetCurrencyIcon" aria-hidden="true">S/.</span>
+        </button>
+        <button id="btnBasemap" class="toolBtn" type="button" title="Mapas base" aria-label="Mapas base">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 4 6-2v16l-6 2-6-2-6 2V4l6-2 6 2Zm-1 2.1-4-1.3v11.1l4 1.3V6.1Zm2-.1v11.4l3-1V5l-3 1ZM5 5.4v11.8l3-1V4.4l-3 1Z"/></svg>
+        </button>
+      </div>
+
+      <!-- Leyenda separada de las herramientas superiores -->
+      <div class="legendDock" aria-label="Control de leyenda">
+        <button id="btnLegend" class="toolBtn active" type="button" title="Leyenda" aria-label="Leyenda" aria-expanded="true">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h6v6H4V4Zm0 10h6v6H4v-6Zm9-9h8v2h-8V5Zm0 4h6v2h-6V9Zm0 6h8v2h-8v-2Zm0 4h6v2h-6v-2Z"/></svg>
+        </button>
+      </div>
+
+      <section id="layersPanel" class="toolPanel" aria-label="Lista de capas">
+        <div class="toolPanelHead"><strong>Lista de capas</strong><button class="closePanel" data-close="layersPanel">✕</button></div>
+        <div id="layersWrap" class="toolPanelBody"></div>
+      </section>
+
+      <section id="legendPanel" class="toolPanel open" aria-label="Leyenda">
+        <div class="toolPanelHead"><strong>Leyenda</strong><button class="closePanel" data-close="legendPanel">✕</button></div>
+        <div id="legendWrap" class="toolPanelBody"></div>
+      </section>
+
+      <section id="budgetModeradoPanel" class="toolPanel budgetPanel" aria-label="Presupuesto · Maquinarias escenario moderado">
+        <div class="toolPanelHead budgetHeadModerado">
+          <strong>Presupuesto · Maquinarias escenario moderado</strong>
+          <button class="closePanel" data-close="budgetModeradoPanel" aria-label="Cerrar presupuesto · maquinarias escenario moderado">✕</button>
+        </div>
+        <div class="toolPanelBody budgetPanelBody">
+          <div class="budgetImageViewport">
+          <img
+            class="budgetImage"
+            src="https://drive.google.com/thumbnail?id=1BUrUBYBuOW0GBiFc8gKuXUtdwph_vEQU&sz=w1600"
+            alt="Escenario moderado"
+            loading="lazy"
+            decoding="async"
+            referrerpolicy="no-referrer"
+          />
+        </div>
+        </div>
+      </section>
+
+      <section id="budgetSeveroPanel" class="toolPanel budgetPanel" aria-label="Presupuesto · Maquinarias escenario severo">
+        <div class="toolPanelHead budgetHeadSevero">
+          <strong>Presupuesto · Maquinarias escenario severo</strong>
+          <button class="closePanel" data-close="budgetSeveroPanel" aria-label="Cerrar presupuesto · maquinarias escenario severo">✕</button>
+        </div>
+        <div class="toolPanelBody budgetPanelBody">
+          <div class="budgetImageViewport">
+          <img
+            class="budgetImage"
+            src="https://drive.google.com/thumbnail?id=1xsjcsaBv_Aj3IvLBIIMNoa_cncuGCaMB&sz=w1600"
+            alt="Escenario severo"
+            loading="lazy"
+            decoding="async"
+            referrerpolicy="no-referrer"
+          />
+        </div>
+        </div>
+      </section>
+
+      <section id="basemapPanel" class="toolPanel" aria-label="Mapas base">
+        <div class="toolPanelHead"><strong>Galería de mapas base</strong><button class="closePanel" data-close="basemapPanel">✕</button></div>
+        <div id="basemapWrap" class="toolPanelBody"></div>
+      </section>
+    </main>
+  </div>
+
+<script>
+require([
+  "esri/Map",
+  "esri/views/MapView",
+  "esri/layers/FeatureLayer",
+  "esri/layers/MapImageLayer",
+  "esri/layers/GroupLayer",
+  "esri/layers/GraphicsLayer",
+  "esri/Graphic",
+  "esri/widgets/LayerList",
+  "esri/widgets/Legend",
+  "esri/widgets/BasemapGallery",
+  "esri/widgets/ScaleBar"
+], function(Map, MapView, FeatureLayer, MapImageLayer, GroupLayer, GraphicsLayer, Graphic, LayerList, Legend, BasemapGallery, ScaleBar){
+
+  const LIM_BASE = "https://portalgis.vivienda.gob.pe/servergis/rest/services/OGEI/Limites_Peru2/FeatureServer";
+  const PROY_URL = "https://portalgis.vivienda.gob.pe/servergis/rest/services/Mapa_Proyectos_PIP_PIURA/MapServer/0";
+
+  const URLS = {
+    maquinariaOperativa: "https://portalgis.vivienda.gob.pe/servergis/rest/services/OGEI/Maquinarias_Piura/MapServer/1",
+    maquinariaSaneamientoDrenaje: "https://portalgis.vivienda.gob.pe/servergis/rest/services/OGEI/Maquinarias_Genesis/MapServer/0",
+    puntosCriticosPriorizados: "https://portalgis.vivienda.gob.pe/servergis/rest/services/OGEI/Mapa_Puntos_Criticos_Piura/MapServer/3",
+    sares: "https://portalgis.vivienda.gob.pe/servergis/rest/services/OGEI/Mapa_visor_sare_PIURA/MapServer",
+    cuencasCofopri: "https://portalgis.vivienda.gob.pe/servergis/rest/services/OGEI/Mapa_Cuencas_Cofopri/MapServer",
+    zonasInundadas2017: "https://portalgis.vivienda.gob.pe/servergis/rest/services/OGEI/Mapa_Inundacion_Piura/MapServer/1",
+    zonasExpuestasPeligro: "https://portalgis.vivienda.gob.pe/servergis/rest/services/OGEI/Mapa_Inundacion_Piura/MapServer/2",
+    riesgoInundacion: "https://portalgis.vivienda.gob.pe/servergis/rest/services/OGEI/Mapa_Inundacion_Piura/MapServer/0",
+    componentes: "https://portalgis.vivienda.gob.pe/servergis/rest/services/OGEI/Mapa_Componentes_Proyectos/FeatureServer/0",
+    viviendasRurales: "https://portalgis.vivienda.gob.pe/servergis/rest/services/viviendas_rurales_piura/MapServer",
+    manzanasAgua: "https://portalgis.vivienda.gob.pe/servergis/rest/services/manzanas_agua_y_saneamiento_piura/MapServer",
+    catastroTecnico: "https://portalgis.vivienda.gob.pe/servergis/rest/services/catastro_tecnico_comercial_sunass_PIURA/MapServer/0",
+    intervencionesEjecucion: "https://portalgis.vivienda.gob.pe/servergis/rest/services/OGEI/Mapa_intervenciones_PNC_GeoVisor_PIURA/MapServer/0",
+    intervencionesEjecutadas: "https://portalgis.vivienda.gob.pe/servergis/rest/services/OGEI/Mapa_intervenciones_PNC_GeoVisor_PIURA/MapServer/1",
+    intervencionesXls: "https://portalgis.vivienda.gob.pe/servergis/rest/services/OGEI/Mapa_intervenciones_PNC_GeoVisor_PIURA/MapServer/3",
+    bonosBae: "https://portalgis.vivienda.gob.pe/servergis/rest/services/bae_piura/MapServer"
+  };
+
+  const $ = id => document.getElementById(id);
+  const selProvincia = $("selProvincia");
+  const selDistrito = $("selDistrito");
+  const estado = $("estado");
+
+  const map = new Map({ basemap:"terrain" });
+  const view = new MapView({
+    container:"viewDiv",
+    map,
+    center:[-80.25,-5.15],
+    zoom:7,
+    constraints:{ minZoom:5, snapToZoom:false },
+    popup:{
+      defaultPopupTemplateEnabled:true,
+      dockEnabled:false
+    }
+  });
+  view.ui.remove("zoom");
+  view.ui.remove("attribution");
+  view.ui.add(new ScaleBar({ view, unit:"metric" }),"bottom-right");
+
+  const departamentoLayer = new FeatureLayer({
+    url:LIM_BASE+"/0",
+    title:"Departamento de Piura",
+    outFields:["*"],
+    popupEnabled:false,
+    legendEnabled:false,
+    renderer:{
+      type:"simple",
+      symbol:{
+        type:"simple-fill",
+        color:[127,23,55,.025],
+        outline:{
+          type:"simple-line",
+          color:[127,23,55,1],
+          width:3.2,
+          style:"solid"
+        }
+      }
+    }
+  });
+
+  const provinciaLayer = new FeatureLayer({
+    url:LIM_BASE+"/2",
+    title:"Provincias de Piura",
+    outFields:["*"],
+    popupEnabled:false,
+    legendEnabled:false,
+    definitionExpression:"id_dep = '20'",
+    renderer:{
+      type:"simple",
+      symbol:{
+        type:"simple-fill",
+        color:[0,0,0,0],
+        outline:{
+          type:"simple-line",
+          color:[44,62,80,.98],
+          width:1.8,
+          style:"short-dash"
+        }
+      }
+    }
+  });
+
+  const distritoLayer = new FeatureLayer({
+    url:LIM_BASE+"/1",
+    title:"Distritos de Piura",
+    outFields:["*"],
+    popupEnabled:false,
+    visible:true,
+    legendEnabled:false,
+    definitionExpression:"id_dpto = '20'",
+    renderer:{
+      type:"simple",
+      symbol:{
+        type:"simple-fill",
+        color:[0,0,0,0],
+        outline:{
+          type:"simple-line",
+          color:[120,130,142,.62],
+          width:.7,
+          style:"solid"
+        }
+      }
+    }
+  });
+
+  /*
+    Capa fuente original.
+    Se conserva para el conteo general y la lógica territorial existente,
+    pero permanece oculta del árbol y del mapa.
+  */
+  const proyectosLayer = new FeatureLayer({
+    url:PROY_URL,
+    title:"Proyectos · fuente",
+    visible:false,
+    listMode:"hide",
+    legendEnabled:false,
+    outFields:["*"],
+    popupEnabled:false
+  });
+
+  /* =========================================================
+     PROYECTOS · tipo_intervencion
+     ========================================================= */
+  function crearRomboProyecto(color,tipo){
+    const detalle = tipo === "pistas"
+      ? `
+        <path d="M10 21 15 9M17 23 22 11"
+              fill="none" stroke="${color}" stroke-width="2.1"
+              stroke-linecap="round"/>
+        <path d="m14.2 18.8 1.1-2.5m1-2.3 1.1-2.5"
+              fill="none" stroke="${color}" stroke-width="1.8"
+              stroke-linecap="round"/>`
+      : `
+        <path d="M16 8.2c-2.8 3.8-5 6.4-5 9.2a5 5 0 0 0 10 0c0-2.8-2.2-5.4-5-9.2Z"
+              fill="none" stroke="${color}" stroke-width="2"
+              stroke-linejoin="round"/>
+        <path d="M13.5 18c.5 1.1 1.3 1.7 2.6 1.7"
+              fill="none" stroke="${color}" stroke-width="1.7"
+              stroke-linecap="round"/>`;
+
+    const svg = `
+      <svg xmlns="http://www.w3.org/2000/svg" width="34" height="34" viewBox="0 0 32 32">
+        <path d="M16 1.8 30.2 16 16 30.2 1.8 16 16 1.8Z"
+              fill="#ffffff" stroke="${color}" stroke-width="2.2"/>
+        <path d="M16 4.8 27.2 16 16 27.2 4.8 16 16 4.8Z"
+              fill="#ffffff"/>
+        ${detalle}
+      </svg>`;
+
+    return "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(svg);
+  }
+
+  const proyectosPistasVeredasLayer = new FeatureLayer({
+    url:PROY_URL,
+    title:"Pistas y veredas",
+    visible:false,
+    outFields:["*"],
+    popupEnabled:true,
+    definitionExpression:"tipo_intervencion = 'Infraestructura y equipamiento urbano'",
+    renderer:{
+      type:"simple",
+      label:"Pistas y veredas",
+      symbol:{
+        type:"picture-marker",
+        url:crearRomboProyecto("#a62650","pistas"),
+        width:28,
+        height:28
+      }
+    },
+    popupTemplate:{
+      title:"{nom_proyecto}",
+      content:[{ type:"fields", fieldInfos:[
+        { fieldName:"cui", label:"CUI" },
+        { fieldName:"tipo_intervencion", label:"Tipo de intervención" },
+        { fieldName:"programa", label:"Programa" },
+        { fieldName:"provincia", label:"Provincia" },
+        { fieldName:"distrito", label:"Distrito" },
+        { fieldName:"estado", label:"Estado" }
+      ]}]
+    }
+  });
+
+  const proyectosSaneamientoLayer = new FeatureLayer({
+    url:PROY_URL,
+    title:"Saneamiento",
+    visible:false,
+    outFields:["*"],
+    popupEnabled:true,
+    definitionExpression:"tipo_intervencion = 'Saneamiento'",
+    renderer:{
+      type:"simple",
+      label:"Saneamiento",
+      symbol:{
+        type:"picture-marker",
+        url:crearRomboProyecto("#1976a8","saneamiento"),
+        width:28,
+        height:28
+      }
+    },
+    popupTemplate:{
+      title:"{nom_proyecto}",
+      content:[{ type:"fields", fieldInfos:[
+        { fieldName:"cui", label:"CUI" },
+        { fieldName:"tipo_intervencion", label:"Tipo de intervención" },
+        { fieldName:"programa", label:"Programa" },
+        { fieldName:"provincia", label:"Provincia" },
+        { fieldName:"distrito", label:"Distrito" },
+        { fieldName:"estado", label:"Estado" }
+      ]}]
+    }
+  });
+
+  const proyectosGrupoLayer = new GroupLayer({
+    title:"Proyectos",
+    visible:true,
+    visibilityMode:"independent",
+    layers:[
+      proyectosSaneamientoLayer,
+      proyectosPistasVeredasLayer
+    ]
+  });
+
+  /* =========================================================
+     OBRAS MVCS
+     Se usa dos veces el mismo servicio de proyectos, con filtros
+     permanentes distintos. Luego se combina el filtro territorial.
+  ========================================================= */
+  const obrasCulminadasLayer = new FeatureLayer({
+    url:PROY_URL,
+    title:"Obras culminadas MVCS",
+    visible:false,
+    listMode:"hide",
+    outFields:["*"],
+    popupEnabled:true,
+    definitionExpression:"tipo_proyecto = 'OBRA' AND estado = 'CONCLUIDO'",
+    renderer:{
+      type:"simple",
+      symbol:{
+        type:"simple-marker",
+        style:"diamond",
+        size:9,
+        color:[30,110,182,.95],
+        outline:{color:[255,255,255,1],width:1.1}
+      }
+    },
+    popupTemplate:{
+      title:"{nom_proyecto}",
+      content:[{
+        type:"fields",
+        fieldInfos:[
+          {fieldName:"cui",label:"CUI"},
+          {fieldName:"tipo_proyecto",label:"Tipo de proyecto"},
+          {fieldName:"estado",label:"Estado"},
+          {fieldName:"provincia",label:"Provincia"},
+          {fieldName:"distrito",label:"Distrito"}
+        ]
+      }]
+    }
+  });
+  obrasCulminadasLayer.__baseWhere =
+    "tipo_proyecto = 'OBRA' AND estado = 'CONCLUIDO'";
+
+  const obrasEjecucionLayer = new FeatureLayer({
+    url:PROY_URL,
+    title:"Obras en ejecución MVCS",
+    visible:false,
+    listMode:"hide",
+    outFields:["*"],
+    popupEnabled:true,
+    definitionExpression:"tipo_proyecto = 'OBRA' AND estado = 'EN EJECUCIÓN'",
+    renderer:{
+      type:"simple",
+      symbol:{
+        type:"simple-marker",
+        style:"triangle",
+        size:10,
+        color:[34,197,94,.95],
+        outline:{color:[255,255,255,1],width:1.1}
+      }
+    },
+    popupTemplate:{
+      title:"{nom_proyecto}",
+      content:[{
+        type:"fields",
+        fieldInfos:[
+          {fieldName:"cui",label:"CUI"},
+          {fieldName:"tipo_proyecto",label:"Tipo de proyecto"},
+          {fieldName:"estado",label:"Estado"},
+          {fieldName:"provincia",label:"Provincia"},
+          {fieldName:"distrito",label:"Distrito"}
+        ]
+      }]
+    }
+  });
+  obrasEjecucionLayer.__baseWhere =
+    "tipo_proyecto = 'OBRA' AND estado = 'EN EJECUCIÓN'";
+
+  /* ================= CAPAS NUEVAS · TODAVÍA SIN FILTRO TERRITORIAL ================= */
+  const maquinariaOperativa = new FeatureLayer({
+    url:URLS.maquinariaOperativa,
+    title:"Maquinarias · Limpieza y descolmatación",
+    visible:false,
+    outFields:["*"],
+    popupEnabled:true
+  });
+
+  const maquinariaSaneamientoDrenajeLayer = new FeatureLayer({
+    url:URLS.maquinariaSaneamientoDrenaje,
+    title:"Maquinarias · Servicio de saneamiento y drenaje",
+    visible:false,
+    outFields:["*"],
+    popupEnabled:true
+  });
+
+  const saresLayer = new MapImageLayer({
+    url:URLS.sares,
+    title:"SARES",
+    visible:false,
+    popupEnabled:true,
+    opacity:.88
+  });
+  // Aplica entidad = MVCS a toda subcapa SARES que contenga ese campo.
+  saresLayer.__entityFilterValue = "MVCS";
+
+  const cuencasLayer = new MapImageLayer({
+    url:URLS.cuencasCofopri,
+    title:"Cuencas COFOPRI",
+    visible:false,
+    popupEnabled:true,
+    opacity:.72
+  });
+
+  const zonasInundadasLayer = new FeatureLayer({
+    url:URLS.zonasInundadas2017,
+    title:"Zonas inundadas en FNC 2017",
+    visible:false,
+    outFields:["*"],
+    popupEnabled:true,
+    opacity:.72
+  });
+
+  const zonasExpuestasPeligroLayer = new FeatureLayer({
+    url:URLS.zonasExpuestasPeligro,
+    title:"Zonas expuestas al peligro",
+    visible:false,
+    outFields:["*"],
+    popupEnabled:true,
+    opacity:.78
+  });
+
+  const riesgoInundacionLayer = new FeatureLayer({
+    url:URLS.riesgoInundacion,
+    title:"Riesgo de inundación",
+    visible:false,
+    outFields:["*"],
+    popupEnabled:true,
+    opacity:.72
+  });
+
+  const puntosCriticosPriorizadosLayer = new FeatureLayer({
+    url:URLS.puntosCriticosPriorizados,
+    title:"Tramos críticos priorizados PNC",
+    visible:false,
+    outFields:["*"],
+    popupEnabled:true,
+    renderer:{
+      type:"simple",
+      symbol:{
+        type:"simple-line",
+        color:[211,84,54,.96],
+        width:4
+      }
+    },
+    popupTemplate:{
+      title:"{nombre}",
+      content:[{
+        type:"fields",
+        fieldInfos:[
+          {fieldName:"codigo",label:"Código"},
+          {fieldName:"provincia",label:"Provincia"},
+          {fieldName:"distrito",label:"Distrito"},
+          {fieldName:"sector",label:"Sector"},
+          {fieldName:"prioridad",label:"Prioridad"},
+          {fieldName:"tipo_pelig",label:"Tipo de peligro"},
+          {fieldName:"nivel_peli",label:"Nivel de peligro"}
+        ]
+      }]
+    }
+  });
+
+  const componentesLayer = new FeatureLayer({
+    url:URLS.componentes,
+    title:"Componentes de proyectos",
+    visible:false,
+    outFields:["*"],
+    popupEnabled:true,
+
+    /* Solo aparece al acercarse a escala de detalle */
+    minScale:100000,
+
+    labelsVisible:true,
+    labelingInfo:[{
+      labelExpressionInfo:{
+        expression:`
+          var c = $feature["componente"];
+          if(IsEmpty(c)){ return ""; }
+          return Proper(Trim(Text(c)));
+        `
+      },
+      labelPlacement:"above-center",
+      minScale:50000,
+      symbol:{
+        type:"text",
+        color:"#172033",
+        haloColor:"#ffffff",
+        haloSize:1.5,
+        font:{
+          family:"Segoe UI",
+          size:9,
+          weight:"bold"
+        }
+      }
+    }]
+  });
+
+  const viviendasRuralesLayer = new MapImageLayer({
+    url:URLS.viviendasRurales,
+    title:"Viviendas rurales",
+    visible:false,
+    popupEnabled:true
+  });
+
+  const manzanasAguaLayer = new MapImageLayer({
+    url:URLS.manzanasAgua,
+    title:"Manzanas agua",
+    visible:false,
+    popupEnabled:true,
+    opacity:.78
+  });
+
+  const catastroTecnicoLayer = new FeatureLayer({
+    url:URLS.catastroTecnico,
+    title:"Catastro técnico comercial",
+    visible:false,
+    outFields:["*"],
+    popupEnabled:true
+  });
+
+  /* =========================================================
+     INTERVENCIONES PNC · SIMBOLOGÍA SIMPLE POR CAPA
+
+     Cada servicio se representa con un único símbolo. Se elimina
+     la categorización interna del servicio y se conserva una misma
+     familia visual de marcadores, diferenciada por color e icono.
+  ========================================================= */
+  function crearIconoIntervencion(color, tipo){
+    const interiores = {
+      ejecutada: `
+        <path d="M8.1 13.2 10.8 16l5.4-6"
+              fill="none" stroke="#ffffff" stroke-width="2.2"
+              stroke-linecap="round" stroke-linejoin="round"/>`,
+      ejecucion: `
+        <path d="M9 10.3a4.5 4.5 0 0 1 7.2-1.1"
+              fill="none" stroke="#ffffff" stroke-width="1.8"
+              stroke-linecap="round"/>
+        <path d="m15.6 7.2.9 2.7-2.8-.2"
+              fill="none" stroke="#ffffff" stroke-width="1.8"
+              stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M16 14.7a4.5 4.5 0 0 1-7.2 1.1"
+              fill="none" stroke="#ffffff" stroke-width="1.8"
+              stroke-linecap="round"/>
+        <path d="m9.4 17.8-.9-2.7 2.8.2"
+              fill="none" stroke="#ffffff" stroke-width="1.8"
+              stroke-linecap="round" stroke-linejoin="round"/>`,
+      programada: `
+        <rect x="8.2" y="8.7" width="7.6" height="7"
+              rx="1.1" fill="none" stroke="#ffffff" stroke-width="1.7"/>
+        <path d="M8.2 11.2h7.6M10.2 7.7v2M13.8 7.7v2"
+              fill="none" stroke="#ffffff" stroke-width="1.7"
+              stroke-linecap="round"/>`
+    };
+
+    const svg = `
+      <svg xmlns="http://www.w3.org/2000/svg" width="30" height="36" viewBox="0 0 24 30">
+        <path d="M12 1.5a9 9 0 0 0-9 9c0 7 9 17.5 9 17.5s9-10.5 9-17.5a9 9 0 0 0-9-9Z"
+              fill="${color}" stroke="#ffffff" stroke-width="1.5"/>
+        <circle cx="12" cy="11.5" r="6.5" fill="${color}"/>
+        ${interiores[tipo] || ""}
+      </svg>`;
+
+    return "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(svg);
+  }
+
+  const intervencionesEjecucionLayer = new FeatureLayer({
+    url:URLS.intervencionesEjecucion,
+    title:"Intervenciones en ejecución",
+    visible:false,
+    outFields:["*"],
+    popupEnabled:true,
+    renderer:{
+      type:"simple",
+      label:"Intervenciones en ejecución",
+      symbol:{
+        type:"picture-marker",
+        url:crearIconoIntervencion("#d99a00","ejecucion"),
+        width:22,
+        height:27
+      }
+    }
+  });
+
+  const intervencionesEjecutadasLayer = new FeatureLayer({
+    url:URLS.intervencionesEjecutadas,
+    title:"Intervenciones ejecutadas",
+    visible:false,
+    outFields:["*"],
+    popupEnabled:true,
+    renderer:{
+      type:"simple",
+      label:"Intervenciones ejecutadas",
+      symbol:{
+        type:"picture-marker",
+        url:crearIconoIntervencion("#2e9f55","ejecutada"),
+        width:22,
+        height:27
+      }
+    }
+  });
+
+  const intervencionesXlsLayer = new FeatureLayer({
+    url:URLS.intervencionesXls,
+    title:"Intervenciones programadas",
+    visible:false,
+    outFields:["*"],
+    popupEnabled:true,
+    renderer:{
+      type:"simple",
+      label:"Intervenciones programadas",
+      symbol:{
+        type:"picture-marker",
+        url:crearIconoIntervencion("#4f6fc7","programada"),
+        width:22,
+        height:27
+      }
+    }
+  });
+
+  /* =========================================================
+     SÍMBOLOS BAE · CÍRCULOS BLANCOS CON ICONO INTERIOR
+     ========================================================= */
+  function crearIconoPoiBae(color,tipo){
+    const iconoInterior = tipo === "potencial"
+      ? `
+        <circle cx="13" cy="10.2" r="2.6"
+                fill="none" stroke="${color}" stroke-width="1.8"/>
+        <path d="M8.6 17.2c.8-2.8 2.5-4.2 4.4-4.2s3.6 1.4 4.4 4.2"
+              fill="none" stroke="${color}" stroke-width="1.8"
+              stroke-linecap="round"/>
+        <path d="M20 8.7v4.8M17.6 11.1h4.8"
+              fill="none" stroke="${color}" stroke-width="1.9"
+              stroke-linecap="round"/>`
+      : `
+        <circle cx="12.2" cy="10.2" r="2.6"
+                fill="none" stroke="${color}" stroke-width="1.8"/>
+        <path d="M7.8 17.2c.8-2.8 2.5-4.2 4.4-4.2 1.2 0 2.3.5 3.1 1.3"
+              fill="none" stroke="${color}" stroke-width="1.8"
+              stroke-linecap="round"/>
+        <path d="m16.3 15.6 1.8 1.8 3.8-4"
+              fill="none" stroke="${color}" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round"/>`;
+
+    const svg = `
+      <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 26 26">
+        <circle cx="13" cy="13" r="11.2"
+                fill="#ffffff" stroke="${color}" stroke-width="2"/>
+        <circle cx="13" cy="13" r="9.2"
+                fill="#ffffff"/>
+        ${iconoInterior}
+      </svg>`;
+
+    return "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(svg);
+  }
+
+  /* =========================================================
+     BONOS BAE · PRESENTACIÓN CONSOLIDADA EN DOS CATEGORÍAS
+
+     El servicio original conserva sus tres subcapas técnicas:
+       0. Convocatoria
+       1. Potencial beneficiario
+       2. Beneficiario
+
+     En la lista de capas y en el mapa se presentan únicamente:
+       • Potencial beneficiario = Convocatoria + Potencial beneficiario
+       • Beneficiario
+
+     Las dos subcapas que forman "Potencial beneficiario" quedan
+     ocultas como elementos individuales y comparten la misma simbología.
+  ========================================================= */
+  const baeConvocatoriaLayer = new FeatureLayer({
+    url:`${URLS.bonosBae}/0`,
+    title:"Convocatoria BAE",
+    visible:false,
+    listMode:"hide",
+    legendEnabled:false,
+    outFields:["*"],
+    popupEnabled:true,
+    renderer:{
+      type:"simple",
+      label:"Bonos BAE · Potenciales beneficiarios",
+      symbol:{
+        type:"picture-marker",
+        url:crearIconoPoiBae("#7e57c2","potencial"),
+        width:26,
+        height:26
+      }
+    }
+  });
+
+  const baePotencialOriginalLayer = new FeatureLayer({
+    url:`${URLS.bonosBae}/1`,
+    title:"Bonos BAE · Potenciales beneficiarios",
+    visible:false,
+    listMode:"hide",
+    legendEnabled:true,
+    outFields:["*"],
+    popupEnabled:true,
+    renderer:{
+      type:"simple",
+      label:"Bonos BAE · Potenciales beneficiarios",
+      symbol:{
+        type:"picture-marker",
+        url:crearIconoPoiBae("#7e57c2","potencial"),
+        width:26,
+        height:26
+      }
+    }
+  });
+
+  const baePotencialLayer = new GroupLayer({
+    title:"Bonos BAE · Potenciales beneficiarios",
+    visible:false,
+    visibilityMode:"independent",
+    listMode:"hide-children",
+    layers:[baeConvocatoriaLayer, baePotencialOriginalLayer]
+  });
+
+  baePotencialLayer.watch("visible", visible => {
+    baeConvocatoriaLayer.visible = visible;
+    baePotencialOriginalLayer.visible = visible;
+  });
+
+  const baeBeneficiarioLayer = new FeatureLayer({
+    url:`${URLS.bonosBae}/2`,
+    title:"Bonos BAE · Beneficiarios",
+    visible:false,
+    outFields:["*"],
+    popupEnabled:true,
+    renderer:{
+      type:"simple",
+      label:"Bonos BAE · Beneficiarios",
+      symbol:{
+        type:"picture-marker",
+        url:crearIconoPoiBae("#2e7d32","beneficiario"),
+        width:26,
+        height:26
+      }
+    }
+  });
+
+
+  /* =========================================================
+     SERVICIOS QUE RESPONDEN A PROVINCIA Y DISTRITO
+     La detección de campos es automática. Si algún servicio usa
+     nombres distintos, solo se amplían las listas de candidatos.
+  ========================================================= */
+  const FEATURE_LAYERS_FILTRABLES = [
+    obrasCulminadasLayer,
+    obrasEjecucionLayer,
+    maquinariaOperativa,
+    maquinariaSaneamientoDrenajeLayer,
+    zonasInundadasLayer,
+    puntosCriticosPriorizadosLayer,
+    zonasExpuestasPeligroLayer,
+    riesgoInundacionLayer,
+    componentesLayer,
+    catastroTecnicoLayer,
+    intervencionesEjecucionLayer,
+    intervencionesEjecutadasLayer,
+    intervencionesXlsLayer,
+    baeConvocatoriaLayer,
+    baePotencialOriginalLayer,
+    baeBeneficiarioLayer
+  ];
+
+  const MAPIMAGE_LAYERS_FILTRABLES = [
+    saresLayer,
+    cuencasLayer,
+    viviendasRuralesLayer,
+    manzanasAguaLayer
+  ];
+
+  /*
+    Activa los pop-ups de todas las subcapas publicadas dentro
+    de los servicios MapImageLayer.
+  */
+  async function activarPopupsMapImage(layer){
+    try{
+      await layer.loadAll();
+      layer.popupEnabled = true;
+
+      if(layer.allSublayers){
+        layer.allSublayers.forEach(sublayer => {
+          sublayer.popupEnabled = true;
+        });
+      }
+    }catch(error){
+      console.warn(`No se pudieron activar todos los pop-ups de ${layer.title}:`, error);
+    }
+  }
+
+  MAPIMAGE_LAYERS_FILTRABLES.forEach(activarPopupsMapImage);
+
+  const grupoActivos = new GroupLayer({
+    title:"ACTIVOS",
+    visible:true,
+    visibilityMode:"independent",
+    layers:[
+      saresLayer,
+      maquinariaSaneamientoDrenajeLayer,
+      maquinariaOperativa
+    ]
+  });
+
+  const grupoIntervenciones = new GroupLayer({
+    title:"INTERVENCIONES",
+    visible:true,
+    visibilityMode:"independent",
+    layers:[
+      baeBeneficiarioLayer,
+      baePotencialLayer,
+      intervencionesXlsLayer,
+      intervencionesEjecutadasLayer,
+      intervencionesEjecucionLayer
+    ]
+  });
+
+  const grupoPeligros = new GroupLayer({
+    title:"PELIGROS",
+    visible:true,
+    visibilityMode:"independent",
+    layers:[
+      puntosCriticosPriorizadosLayer,
+      zonasExpuestasPeligroLayer,
+      riesgoInundacionLayer,
+      zonasInundadasLayer,
+      cuencasLayer
+    ]
+  });
+
+  const grupoVulnerabilidad = new GroupLayer({
+    title:"VULNERABILIDAD",
+    visible:true,
+    visibilityMode:"independent",
+    layers:[
+      obrasCulminadasLayer,
+      obrasEjecucionLayer,
+      proyectosLayer,
+      catastroTecnicoLayer,
+      manzanasAguaLayer,
+      viviendasRuralesLayer,
+      componentesLayer,
+      proyectosGrupoLayer
+    ]
+  });
+
+  const grupoLimites = new GroupLayer({
+    title:"Límites políticos",
+    visible:true,
+    listMode:"hide",
+    visibilityMode:"independent",
+    layers:[departamentoLayer, provinciaLayer, distritoLayer]
+  });
+
+  const seleccionLayer = new GraphicsLayer({
+    title:"Selección territorial",
+    listMode:"hide"
+  });
+
+  /*
+    Estado inicial del dashboard:
+    solamente mapa base y límites territoriales visibles.
+  */
+  [
+    maquinariaOperativa,
+    maquinariaSaneamientoDrenajeLayer,
+    saresLayer,
+    intervencionesEjecucionLayer,
+    intervencionesEjecutadasLayer,
+    intervencionesXlsLayer,
+    baePotencialLayer,
+    baeBeneficiarioLayer,
+    cuencasLayer,
+    zonasInundadasLayer,
+    riesgoInundacionLayer,
+    zonasExpuestasPeligroLayer,
+    puntosCriticosPriorizadosLayer,
+    componentesLayer,
+    proyectosLayer,
+    proyectosPistasVeredasLayer,
+    proyectosSaneamientoLayer,
+    viviendasRuralesLayer,
+    manzanasAguaLayer,
+    catastroTecnicoLayer,
+    obrasCulminadasLayer,
+    obrasEjecucionLayer
+  ].forEach(layer => {
+    layer.visible = false;
+  });
+
+  departamentoLayer.visible = true;
+  provinciaLayer.visible = true;
+  distritoLayer.visible = true;
+
+  /*
+    Los límites políticos son únicamente de referencia visual.
+    No muestran pop-ups ni responden como entidades seleccionables.
+  */
+  [departamentoLayer, provinciaLayer, distritoLayer].forEach(layer => {
+    layer.popupEnabled = false;
+    layer.popupTemplate = null;
+  });
+
+  /*
+    Orden real del mapa: la última capa se dibuja encima.
+    Los límites y la selección se mantienen por encima del contenido,
+    aunque permanecen ocultos de la lista de capas.
+  */
+  map.addMany([
+    grupoVulnerabilidad,
+    grupoPeligros,
+    grupoIntervenciones,
+    grupoActivos,
+    grupoLimites,
+    seleccionLayer
+  ]);
+
+  /* =========================================================
+     ÁRBOL PERSONALIZADO DE CAPAS CON DRAG & DROP
+     - Cada grupo y capa tiene un asa de seis puntos.
+     - La primera capa de la lista se dibuja por encima de las inferiores.
+     - Se permite reordenar grupos y capas.
+     - Las capas pueden moverse entre los grupos visibles.
+     ========================================================= */
+  const arbolCapas = [
+    {
+      id:"activos",
+      layer:grupoActivos,
+      open:false,
+      children:[
+        maquinariaOperativa,
+        maquinariaSaneamientoDrenajeLayer,
+        saresLayer
+      ]
+    },
+    {
+      id:"intervenciones",
+      layer:grupoIntervenciones,
+      open:false,
+      children:[
+        intervencionesEjecucionLayer,
+        intervencionesEjecutadasLayer,
+        intervencionesXlsLayer,
+        baeBeneficiarioLayer
+      ]
+    },
+    {
+      id:"peligros",
+      layer:grupoPeligros,
+      open:false,
+      children:[
+        cuencasLayer,
+        zonasInundadasLayer,
+        riesgoInundacionLayer,
+        zonasExpuestasPeligroLayer,
+        puntosCriticosPriorizadosLayer
+      ]
+    },
+    {
+      id:"vulnerabilidad",
+      layer:grupoVulnerabilidad,
+      open:false,
+      children:[
+        proyectosGrupoLayer,
+        viviendasRuralesLayer,
+        manzanasAguaLayer,
+        catastroTecnicoLayer
+      ]
+    }
+  ];
+
+  const modeloProyectos = {
+    id:"proyectos",
+    layer:proyectosGrupoLayer,
+    open:false,
+    children:[
+      proyectosPistasVeredasLayer,
+      proyectosSaneamientoLayer
+    ]
+  };
+
+  let secuenciaNodo=0;
+  let arrastreActual=null;
+
+  function idNodo(layer){
+    if(!layer.__treeNodeId){
+      secuenciaNodo+=1;
+      layer.__treeNodeId=`tree-node-${secuenciaNodo}`;
+    }
+    return layer.__treeNodeId;
+  }
+
+  function crearAsa(){
+    const asa=document.createElement("span");
+    asa.className="layerTreeHandle";
+    asa.title="Arrastrar para cambiar el orden";
+    asa.setAttribute("aria-label","Arrastrar para cambiar el orden");
+    asa.draggable=true;
+
+    for(let i=0;i<6;i+=1){
+      const punto=document.createElement("i");
+      asa.appendChild(punto);
+    }
+    return asa;
+  }
+
+  function obtenerModeloGrupoPorCapa(layer){
+    return arbolCapas.find(grupo=>grupo.layer===layer) || null;
+  }
+
+  function obtenerModeloGrupoDeHijo(layer){
+    return arbolCapas.find(grupo=>grupo.children.includes(layer))
+      || (modeloProyectos.children.includes(layer) ? modeloProyectos : null);
+  }
+
+  function sincronizarOrdenGrupo(modelo){
+    const coleccion=modelo.layer.layers;
+    const visibles=new Set(modelo.children);
+    const ocultas=coleccion.toArray().filter(layer=>!visibles.has(layer));
+
+    /*
+      ArcGIS dibuja la última capa de la colección por encima.
+      Por eso se invierte el orden mostrado en el árbol.
+    */
+    const ordenReal=[
+      ...ocultas,
+      ...modelo.children.slice().reverse()
+    ];
+
+    ordenReal.forEach((layer,index)=>{
+      if(coleccion.indexOf(layer)!==index){
+        coleccion.reorder(layer,index);
+      }
+    });
+  }
+
+  function sincronizarOrdenRaiz(){
+    const coleccion=map.layers;
+    const gruposVisibles=arbolCapas.map(grupo=>grupo.layer);
+    const visiblesSet=new Set(gruposVisibles);
+
+    /*
+      Los elementos ocultos de la lista, como límites y selección,
+      permanecen al final para conservarse por encima del contenido.
+    */
+    const ocultos=coleccion.toArray().filter(layer=>!visiblesSet.has(layer));
+    const ordenReal=[
+      ...gruposVisibles.slice().reverse(),
+      ...ocultos
+    ];
+
+    ordenReal.forEach((layer,index)=>{
+      if(coleccion.indexOf(layer)!==index){
+        coleccion.reorder(layer,index);
+      }
+    });
+  }
+
+  function limpiarMarcasDrop(){
+    document.querySelectorAll(".layerTreeRow").forEach(row=>{
+      row.classList.remove("dropBefore","dropAfter","dropInside","dragging");
+    });
+  }
+
+  function configurarArrastre(asa,fila,nodo){
+    asa.addEventListener("dragstart",event=>{
+      arrastreActual=nodo;
+      fila.classList.add("dragging");
+      event.dataTransfer.effectAllowed="move";
+      event.dataTransfer.setData("text/plain",nodo.id);
+    });
+
+    asa.addEventListener("dragend",()=>{
+      arrastreActual=null;
+      limpiarMarcasDrop();
+    });
+  }
+
+  function posicionDrop(event,fila){
+    const rect=fila.getBoundingClientRect();
+    return event.clientY < rect.top + rect.height/2 ? "before" : "after";
+  }
+
+  function reordenarGrupo(origen,destino,posicion){
+    const indiceOrigen=arbolCapas.indexOf(origen);
+    let indiceDestino=arbolCapas.indexOf(destino);
+
+    if(indiceOrigen<0 || indiceDestino<0 || origen===destino) return;
+
+    arbolCapas.splice(indiceOrigen,1);
+    if(indiceOrigen<indiceDestino) indiceDestino-=1;
+    if(posicion==="after") indiceDestino+=1;
+
+    arbolCapas.splice(indiceDestino,0,origen);
+    sincronizarOrdenRaiz();
+    renderizarArbolCapas();
+  }
+
+  function moverCapa(origen,destinoModelo,destinoCapa,posicion="before"){
+    const modeloOrigen=obtenerModeloGrupoDeHijo(origen.layer);
+    if(!modeloOrigen || !destinoModelo) return;
+
+    let indiceDestino=destinoCapa
+      ? destinoModelo.children.indexOf(destinoCapa)
+      : 0;
+
+    const indiceOrigen=modeloOrigen.children.indexOf(origen.layer);
+    modeloOrigen.children.splice(indiceOrigen,1);
+
+    if(modeloOrigen===destinoModelo && indiceOrigen<indiceDestino){
+      indiceDestino-=1;
+    }
+
+    if(destinoCapa && posicion==="after"){
+      indiceDestino+=1;
+    }
+
+    if(!destinoCapa){
+      indiceDestino=0;
+    }
+
+    indiceDestino=Math.max(0,Math.min(indiceDestino,destinoModelo.children.length));
+    destinoModelo.children.splice(indiceDestino,0,origen.layer);
+
+    if(modeloOrigen!==destinoModelo){
+      modeloOrigen.layer.layers.remove(origen.layer);
+      destinoModelo.layer.layers.add(origen.layer);
+    }
+
+    sincronizarOrdenGrupo(modeloOrigen);
+    if(modeloOrigen!==destinoModelo){
+      sincronizarOrdenGrupo(destinoModelo);
+    }
+
+    renderizarArbolCapas();
+  }
+
+  function crearFilaCapa(layer,modeloGrupo,nivel=1){
+    if(layer===proyectosGrupoLayer){
+      return crearFilaGrupoProyectos(modeloProyectos,modeloGrupo,nivel);
+    }
+
+    const fila=document.createElement("div");
+    fila.className="layerTreeRow layerTreeLayer";
+    fila.dataset.nodeId=idNodo(layer);
+    fila.style.setProperty("--tree-level",String(nivel));
+
+    const asa=crearAsa();
+    const checkbox=document.createElement("input");
+    checkbox.type="checkbox";
+    checkbox.className="layerTreeCheck";
+    checkbox.checked=layer.visible;
+    checkbox.title=`Mostrar u ocultar ${layer.title}`;
+
+    const titulo=document.createElement("span");
+    titulo.className="layerTreeTitle";
+    titulo.textContent=layer.title;
+
+    fila.append(asa,checkbox,titulo);
+
+    checkbox.addEventListener("change",()=>{
+      layer.visible=checkbox.checked;
+      fila.classList.toggle("isHidden",!layer.visible);
+    });
+
+    fila.classList.toggle("isHidden",!layer.visible);
+
+    const nodo={
+      id:idNodo(layer),
+      type:"layer",
+      layer,
+      model:modeloGrupo
+    };
+
+    configurarArrastre(asa,fila,nodo);
+
+    fila.addEventListener("dragover",event=>{
+      if(!arrastreActual || arrastreActual.type!=="layer") return;
+      event.preventDefault();
+      event.stopPropagation();
+
+      const posicion=posicionDrop(event,fila);
+      fila.classList.toggle("dropBefore",posicion==="before");
+      fila.classList.toggle("dropAfter",posicion==="after");
+      fila.classList.remove("dropInside");
+      event.dataTransfer.dropEffect="move";
+    });
+
+    fila.addEventListener("dragleave",event=>{
+      if(!fila.contains(event.relatedTarget)){
+        fila.classList.remove("dropBefore","dropAfter");
+      }
+    });
+
+    fila.addEventListener("drop",event=>{
+      if(!arrastreActual || arrastreActual.type!=="layer") return;
+      event.preventDefault();
+      event.stopPropagation();
+
+      const posicion=posicionDrop(event,fila);
+      moverCapa(arrastreActual,modeloGrupo,layer,posicion);
+      arrastreActual=null;
+      limpiarMarcasDrop();
+    });
+
+    return fila;
+  }
+
+  function crearFilaGrupoProyectos(modelo,modeloPadre,nivel=1){
+    const contenedor=document.createElement("section");
+    contenedor.className="layerTreeNestedGroup";
+
+    const fila=document.createElement("div");
+    fila.className="layerTreeRow layerTreeGroupRow layerTreeSubgroupRow";
+    fila.dataset.nodeId=idNodo(modelo.layer);
+    fila.style.setProperty("--tree-level",String(nivel));
+
+    const asa=crearAsa();
+
+    const desplegar=document.createElement("button");
+    desplegar.type="button";
+    desplegar.className="layerTreeToggle";
+    desplegar.setAttribute("aria-expanded",String(modelo.open));
+    desplegar.title=modelo.open ? "Contraer Proyectos" : "Expandir Proyectos";
+    desplegar.innerHTML='<span aria-hidden="true">▾</span>';
+
+    const checkbox=document.createElement("input");
+    checkbox.type="checkbox";
+    checkbox.className="layerTreeCheck";
+
+    const cantidadVisibles=modelo.children.filter(layer=>layer.visible).length;
+    checkbox.checked=modelo.children.length>0 && cantidadVisibles===modelo.children.length;
+    checkbox.indeterminate=cantidadVisibles>0 && cantidadVisibles<modelo.children.length;
+    checkbox.title="Mostrar u ocultar las capas de Proyectos";
+
+    const titulo=document.createElement("span");
+    titulo.className="layerTreeTitle";
+    titulo.textContent=modelo.layer.title;
+
+    fila.append(asa,desplegar,checkbox,titulo);
+
+    const hijos=document.createElement("div");
+    hijos.className="layerTreeChildren layerTreeNestedChildren";
+    hijos.hidden=!modelo.open;
+
+    modelo.children.forEach(layer=>{
+      hijos.appendChild(crearFilaCapa(layer,modelo,nivel+1));
+    });
+
+    desplegar.addEventListener("click",()=>{
+      modelo.open=!modelo.open;
+      renderizarArbolCapas();
+    });
+
+    checkbox.addEventListener("change",()=>{
+      modelo.layer.visible=true;
+      modelo.children.forEach(layer=>{
+        layer.visible=checkbox.checked;
+      });
+      renderizarArbolCapas();
+    });
+
+    fila.classList.toggle("isHidden",cantidadVisibles===0);
+
+    const nodo={
+      id:idNodo(modelo.layer),
+      type:"layer",
+      layer:modelo.layer,
+      model:modeloPadre
+    };
+
+    configurarArrastre(asa,fila,nodo);
+
+    fila.addEventListener("dragover",event=>{
+      if(!arrastreActual || arrastreActual.type!=="layer" || arrastreActual.layer===modelo.layer) return;
+      event.preventDefault();
+      event.stopPropagation();
+      fila.classList.add("dropInside");
+      fila.classList.remove("dropBefore","dropAfter");
+      event.dataTransfer.dropEffect="move";
+    });
+
+    fila.addEventListener("dragleave",event=>{
+      if(!fila.contains(event.relatedTarget)){
+        fila.classList.remove("dropInside");
+      }
+    });
+
+    fila.addEventListener("drop",event=>{
+      if(!arrastreActual || arrastreActual.type!=="layer" || arrastreActual.layer===modelo.layer) return;
+      event.preventDefault();
+      event.stopPropagation();
+
+      moverCapa(arrastreActual,modelo,null,"before");
+      modelo.layer.visible=true;
+      arrastreActual=null;
+      limpiarMarcasDrop();
+    });
+
+    contenedor.append(fila,hijos);
+    return contenedor;
+  }
+
+  function crearGrupo(modelo){
+    const contenedor=document.createElement("section");
+    contenedor.className="layerTreeGroup";
+
+    const fila=document.createElement("div");
+    fila.className="layerTreeRow layerTreeGroupRow";
+    fila.dataset.nodeId=idNodo(modelo.layer);
+
+    const asa=crearAsa();
+
+    const desplegar=document.createElement("button");
+    desplegar.type="button";
+    desplegar.className="layerTreeToggle";
+    desplegar.setAttribute("aria-expanded",String(modelo.open));
+    desplegar.title=modelo.open ? "Contraer grupo" : "Expandir grupo";
+    desplegar.innerHTML='<span aria-hidden="true">▾</span>';
+
+    const checkbox=document.createElement("input");
+    checkbox.type="checkbox";
+    checkbox.className="layerTreeCheck";
+    checkbox.checked=modelo.layer.visible;
+    checkbox.title=`Mostrar u ocultar ${modelo.layer.title}`;
+
+    const titulo=document.createElement("span");
+    titulo.className="layerTreeTitle";
+    titulo.textContent=modelo.layer.title;
+
+    fila.append(asa,desplegar,checkbox,titulo);
+
+    const hijos=document.createElement("div");
+    hijos.className="layerTreeChildren";
+    hijos.hidden=!modelo.open;
+
+    modelo.children.forEach(layer=>{
+      hijos.appendChild(crearFilaCapa(layer,modelo,1));
+    });
+
+    desplegar.addEventListener("click",()=>{
+      modelo.open=!modelo.open;
+      renderizarArbolCapas();
+    });
+
+    checkbox.addEventListener("change",()=>{
+      modelo.layer.visible=checkbox.checked;
+      fila.classList.toggle("isHidden",!modelo.layer.visible);
+    });
+
+    fila.classList.toggle("isHidden",!modelo.layer.visible);
+
+    const nodo={
+      id:idNodo(modelo.layer),
+      type:"group",
+      layer:modelo.layer,
+      model:modelo
+    };
+
+    configurarArrastre(asa,fila,nodo);
+
+    fila.addEventListener("dragover",event=>{
+      if(!arrastreActual) return;
+
+      if(arrastreActual.type==="group"){
+        event.preventDefault();
+        const posicion=posicionDrop(event,fila);
+        fila.classList.toggle("dropBefore",posicion==="before");
+        fila.classList.toggle("dropAfter",posicion==="after");
+        fila.classList.remove("dropInside");
+        event.dataTransfer.dropEffect="move";
+        return;
+      }
+
+      if(arrastreActual.type==="layer"){
+        event.preventDefault();
+        fila.classList.add("dropInside");
+        fila.classList.remove("dropBefore","dropAfter");
+        event.dataTransfer.dropEffect="move";
+      }
+    });
+
+    fila.addEventListener("dragleave",event=>{
+      if(!fila.contains(event.relatedTarget)){
+        fila.classList.remove("dropBefore","dropAfter","dropInside");
+      }
+    });
+
+    fila.addEventListener("drop",event=>{
+      if(!arrastreActual) return;
+      event.preventDefault();
+      event.stopPropagation();
+
+      if(arrastreActual.type==="group"){
+        const posicion=posicionDrop(event,fila);
+        reordenarGrupo(arrastreActual.model,modelo,posicion);
+      }else if(arrastreActual.type==="layer"){
+        moverCapa(arrastreActual,modelo,null,"before");
+      }
+
+      arrastreActual=null;
+      limpiarMarcasDrop();
+    });
+
+    contenedor.append(fila,hijos);
+    return contenedor;
+  }
+
+  function renderizarArbolCapas(){
+    const contenedor=$("layersWrap");
+    contenedor.innerHTML="";
+
+    const arbol=document.createElement("div");
+    arbol.className="customLayerTree";
+
+    arbolCapas.forEach(modelo=>{
+      arbol.appendChild(crearGrupo(modelo));
+    });
+
+    contenedor.appendChild(arbol);
+  }
+
+  arbolCapas.forEach(modelo=>{
+    sincronizarOrdenGrupo(modelo);
+
+    [modelo.layer,...modelo.children].forEach(layer=>{
+      layer.watch("visible",()=>{
+        renderizarArbolCapas();
+      });
+    });
+  });
+
+  sincronizarOrdenGrupo(modeloProyectos);
+  [modeloProyectos.layer,...modeloProyectos.children].forEach(layer=>{
+    layer.watch("visible",()=>{
+      renderizarArbolCapas();
+    });
+  });
+
+  sincronizarOrdenRaiz();
+  renderizarArbolCapas();
+  new Legend({ view, container:"legendWrap", respectLayerVisibility:true });
+  new BasemapGallery({ view, container:"basemapWrap" });
+
+  let piuraFeature=null, initialViewpoint=null, provincias=[], distritos=[];
+  let departamentoView=null, provinciaView=null, distritoView=null, proyectosView=null;
+  let proyectosPistasVeredasView=null, proyectosSaneamientoView=null;
+  let currentGeometry=null;
+
+  function normalizar(v){ return String(v??"").trim().toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g,""); }
+  function setEstado(texto,error=false){
+    if(!estado) return;
+    estado.textContent=texto;
+    estado.classList.toggle("error",error);
+  }
+  function fieldExists(layer,name){ return (layer.fields||[]).some(f=>f.name===name); }
+
+  function resaltar(geometry,nivel){
+    seleccionLayer.removeAll();
+    if(!geometry) return;
+    seleccionLayer.add(new Graphic({
+      geometry,
+      symbol:{ type:"simple-fill", color:nivel==="distrito"?[127,23,55,.12]:[127,23,55,.07], outline:{ color:[127,23,55,1], width:nivel==="distrito"?3.2:2.7 } }
+    }));
+  }
+
+  async function queryPiura(){
+    const q=departamentoLayer.createQuery(); q.where="1=1"; q.outFields=["*"]; q.returnGeometry=true; q.num=300;
+    const r=await departamentoLayer.queryFeatures(q);
+    piuraFeature=(r.features||[]).find(f=>normalizar(f.attributes?.nom_dep)==="PIURA");
+    if(!piuraFeature) throw new Error("No se encontró PIURA en la capa de departamentos.");
+    const oid=piuraFeature.attributes[departamentoLayer.objectIdField];
+    departamentoView.filter={ where:`${departamentoLayer.objectIdField} = ${oid}` };
+    provinciaView.filter={ geometry:piuraFeature.geometry, spatialRelationship:"intersects" };
+    distritoView.filter={ geometry:piuraFeature.geometry, spatialRelationship:"intersects" };
+    proyectosView.filter={ geometry:piuraFeature.geometry, spatialRelationship:"intersects" };
+    proyectosPistasVeredasView.filter={ geometry:piuraFeature.geometry, spatialRelationship:"intersects" };
+    proyectosSaneamientoView.filter={ geometry:piuraFeature.geometry, spatialRelationship:"intersects" };
+    await view.goTo(piuraFeature.geometry.extent.expand(1.07),{duration:500});
+    initialViewpoint=view.viewpoint.clone(); currentGeometry=piuraFeature.geometry;
+  }
+
+  async function cargarProvincias(){
+    // Lista oficial y estricta de las 8 provincias del departamento de Piura.
+    // Se aplica además del id_dep = 20 para impedir que provincias vecinas
+    // entren al selector por coincidencias espaciales en los bordes.
+    const PROVINCIAS_PIURA = new Set([
+      "AYABACA",
+      "HUANCABAMBA",
+      "MORROPON",
+      "PAITA",
+      "PIURA",
+      "SECHURA",
+      "SULLANA",
+      "TALARA"
+    ]);
+
+    const q=provinciaLayer.createQuery();
+    q.where="id_dep = '20'";
+    q.outFields=["*"];
+    q.returnGeometry=true;
+    q.num=1000;
+
+    const r=await provinciaLayer.queryFeatures(q);
+
+    provincias=(r.features||[])
+      .filter(f=>f.geometry && PROVINCIAS_PIURA.has(normalizar(f.attributes?.nom_prov)))
+      .sort((a,b)=>String(a.attributes?.nom_prov||"").localeCompare(String(b.attributes?.nom_prov||""),"es"));
+
+    selProvincia.innerHTML='<option value="">Todas las provincias</option>'+provincias.map((f,i)=>`<option value="${i}">${f.attributes.nom_prov}</option>`).join("");
+    selProvincia.disabled=false;
+    $("kpiProvincias").textContent=provincias.length;
+  }
+
+  async function cargarDistritos(provinciaFeature){
+    const q=distritoLayer.createQuery(); q.where="1=1"; q.geometry=provinciaFeature.geometry; q.spatialRelationship="intersects"; q.outFields=["*"]; q.returnGeometry=true; q.num=3000;
+    const r=await distritoLayer.queryFeatures(q);
+    distritos=(r.features||[]).filter(f=>{
+      if(!f.geometry) return false;
+      const c=f.geometry.extent?.center;
+      return c?provinciaFeature.geometry.contains(c):true;
+    }).sort((a,b)=>String(a.attributes?.nom_dist||"").localeCompare(String(b.attributes?.nom_dist||""),"es"));
+    selDistrito.innerHTML='<option value="">Todos los distritos</option>'+distritos.map((f,i)=>`<option value="${i}">${f.attributes.nom_dist}</option>`).join("");
+    selDistrito.disabled=false;
+    distritoView.filter={ geometry:provinciaFeature.geometry, spatialRelationship:"intersects" };
+    $("kpiDistritos").textContent=distritos.length;
+  }
+
+  async function actualizarProyectos(geometry){
+    const filtro={ geometry, spatialRelationship:"intersects" };
+
+    proyectosView.filter=filtro;
+    proyectosPistasVeredasView.filter=filtro;
+    proyectosSaneamientoView.filter=filtro;
+
+    const q=proyectosLayer.createQuery();
+    q.geometry=geometry;
+    q.spatialRelationship="intersects";
+    q.returnGeometry=false;
+
+    const total=await proyectosLayer.queryFeatureCount(q);
+    $("kpiProyectos").textContent=total.toLocaleString("es-PE");
+  }
+
+  function limpiarUrl(url){ return String(url||"").replace(/\/$/,""); }
+  function escaparSQL(v){ return String(v??"").replace(/'/g,"''"); }
+
+  function seleccionTerritorial(){
+    const provinciaFeature=selProvincia.value!==""?provincias[Number(selProvincia.value)]:null;
+    const distritoFeature=selDistrito.value!==""?distritos[Number(selDistrito.value)]:null;
+    return {
+      provincia:String(provinciaFeature?.attributes?.nom_prov||"").trim(),
+      distrito:String(distritoFeature?.attributes?.nom_dist||"").trim()
+    };
+  }
+
+  function nombreCampoNormalizado(v){
+    return normalizar(v).replace(/[^A-Z0-9]/g,"");
+  }
+
+  const CAMPOS_PROVINCIA=[
+    "PROVINCIA","NOM_PROV","NOMBRE_PROVINCIA","NOMPROV",
+    "PROV","PROVINCIA_NOMBRE","NOMB_PROV","NOMBREPROVINCIA"
+  ].map(nombreCampoNormalizado);
+
+  // La capa "Zonas expuestas al peligro" usa:
+  // provincia = nom_prov
+  // distrito  = nom_dist
+  // Ambos nombres ya están incluidos en los candidatos automáticos.
+
+  const CAMPOS_DISTRITO=[
+    "DISTRITO","NOM_DIST","NOMBRE_DISTRITO","NOMDIST",
+    "DIST","DISTRITO_NOMBRE","NOMB_DIST","NOMBREDISTRITO"
+  ].map(nombreCampoNormalizado);
+
+  function detectarCampo(fields,candidatos){
+    const lista=Array.isArray(fields)?fields:[];
+    for(const candidato of candidatos){
+      const encontrado=lista.find(f=>nombreCampoNormalizado(f?.name)===candidato);
+      if(encontrado) return encontrado.name;
+    }
+    return "";
+  }
+
+  function construirWhereConCampos(fields){
+    const {provincia,distrito}=seleccionTerritorial();
+    if(!provincia && !distrito) return "1=1";
+
+    const campoProvincia=detectarCampo(fields,CAMPOS_PROVINCIA);
+    const campoDistrito=detectarCampo(fields,CAMPOS_DISTRITO);
+    const condiciones=[];
+
+    if(provincia){
+      if(!campoProvincia) throw new Error("No se encontró el campo provincia");
+      condiciones.push(`UPPER(${campoProvincia}) = UPPER('${escaparSQL(provincia)}')`);
+    }
+
+    if(distrito){
+      if(!campoDistrito) throw new Error("No se encontró el campo distrito");
+      condiciones.push(`UPPER(${campoDistrito}) = UPPER('${escaparSQL(distrito)}')`);
+    }
+
+    return condiciones.length?condiciones.join(" AND "):"1=1";
+  }
+
+  async function fetchJson(url){
+    const sep=url.includes("?")?"&":"?";
+    const r=await fetch(url+sep+"f=json",{mode:"cors"});
+    if(!r.ok) throw new Error("HTTP "+r.status);
+    const j=await r.json();
+    if(j.error) throw new Error(j.error.message||"Error del servicio");
+    return j;
+  }
+
+  async function aplicarFiltroFeatureLayer(layer){
+    try{
+      await layer.load();
+      const whereTerritorial=construirWhereConCampos(layer.fields||[]);
+      const whereBase=String(layer.__baseWhere||"").trim();
+
+      const whereFinal =
+        whereBase && whereTerritorial !== "1=1"
+          ? `(${whereBase}) AND (${whereTerritorial})`
+          : whereBase || whereTerritorial;
+
+      layer.definitionExpression=whereFinal;
+      console.log(`[Filtro] ${layer.title}: ${whereFinal}`);
+      return true;
+    }catch(error){
+      console.warn(`[Filtro] ${layer.title}:`,error.message||error);
+      return false;
+    }
+  }
+
+  async function aplicarFiltroMapImageLayer(layer){
+    try{
+      await layer.load();
+      const sublayers=layer.allSublayers?.toArray?.()||layer.sublayers?.toArray?.()||[];
+
+      await Promise.all(sublayers.map(async sublayer=>{
+        // Solo se filtran capas hoja; los grupos reciben el resultado de sus hijas.
+        if(sublayer.sublayers && sublayer.sublayers.length) return;
+
+        try{
+          const meta=await fetchJson(`${limpiarUrl(layer.url)}/${sublayer.id}`);
+          const fields=meta.fields||[];
+          const whereTerritorial=construirWhereConCampos(fields);
+          const condiciones=[];
+
+          if(whereTerritorial && whereTerritorial !== "1=1") condiciones.push(`(${whereTerritorial})`);
+
+          if(layer.__entityFilterValue){
+            const campoEntidad=detectarCampo(fields,[nombreCampoNormalizado("ENTIDAD")]);
+            if(campoEntidad){
+              condiciones.push(`UPPER(${campoEntidad}) = UPPER('${escaparSQL(layer.__entityFilterValue)}')`);
+            }
+          }
+
+          const where=condiciones.length?condiciones.join(" AND "):"1=1";
+          sublayer.definitionExpression=where;
+          console.log(`[Filtro] ${layer.title} / ${sublayer.title}: ${where}`);
+        }catch(error){
+          console.warn(`[Filtro] ${layer.title} / ${sublayer.title}:`,error.message||error);
+        }
+      }));
+
+      return true;
+    }catch(error){
+      console.warn(`[Filtro] ${layer.title}:`,error.message||error);
+      return false;
+    }
+  }
+
+  async function aplicarFiltrosServicios(){
+    await Promise.allSettled([
+      ...FEATURE_LAYERS_FILTRABLES.map(aplicarFiltroFeatureLayer),
+      ...MAPIMAGE_LAYERS_FILTRABLES.map(aplicarFiltroMapImageLayer)
+    ]);
+
+    await cargarIndicadoresServicios();
+  }
+
+  async function contarCapaRest(url, whereAdicional=""){
+    const base=limpiarUrl(url);
+    const meta=await fetchJson(base);
+    const {provincia,distrito}=seleccionTerritorial();
+
+    function combinarWhere(whereTerritorial){
+      const extra=String(whereAdicional||"").trim();
+      if(extra && whereTerritorial !== "1=1"){
+        return `(${extra}) AND (${whereTerritorial})`;
+      }
+      return extra || whereTerritorial || "1=1";
+    }
+
+    // URL directa a una capa: /MapServer/0 o /FeatureServer/0
+    if(meta.type || meta.geometryType || Array.isArray(meta.fields)){
+      const whereTerritorial=construirWhereConCampos(meta.fields||[]);
+      const where=combinarWhere(whereTerritorial);
+      const q=await fetchJson(
+        base+"/query?where="+encodeURIComponent(where)+"&returnCountOnly=true"
+      );
+      return Number(q.count||0);
+    }
+
+    // Servicio raíz: sumar capas hoja. Cada subcapa detecta sus propios campos.
+    const layers=(meta.layers||[]).filter(x=>x && x.id!=null && !Array.isArray(x.subLayerIds));
+    if(!layers.length) return 0;
+
+    const resultados=await Promise.allSettled(layers.map(async x=>{
+      const layerUrl=base+"/"+x.id;
+      const layerMeta=await fetchJson(layerUrl);
+      const whereTerritorial=construirWhereConCampos(layerMeta.fields||[]);
+      const where=combinarWhere(whereTerritorial);
+      const q=await fetchJson(
+        layerUrl+"/query?where="+encodeURIComponent(where)+"&returnCountOnly=true"
+      );
+      return Number(q.count||0);
+    }));
+
+    const validos=resultados.filter(r=>r.status==="fulfilled").map(r=>r.value);
+
+    // Si existe selección y ninguna subcapa tenía campos compatibles, se muestra N/D.
+    if((provincia||distrito) && !validos.length){
+      throw new Error("El servicio no tiene campos provincia/distrito compatibles");
+    }
+
+    return validos.reduce((a,b)=>a+b,0);
+  }
+
+  function pintarIndicador(key,id,value,error=false){
+    const el=$(id);
+    const card=document.querySelector(`[data-indicator="${key}"]`);
+    if(el) el.textContent=error?"N/D":Number(value||0).toLocaleString("es-PE");
+    if(card){ card.classList.remove("loading"); card.classList.toggle("error",error); }
+  }
+
+  function pintarValorSimple(id,value,error=false){
+    const el=$(id);
+    if(el) el.textContent=error?"N/D":Number(value||0).toLocaleString("es-PE");
+  }
+
+  async function obtenerCapasBae(){
+    const meta=await fetchJson(URLS.bonosBae);
+    const capas=(meta.layers||[])
+      .filter(x=>x && x.id!=null && !Array.isArray(x.subLayerIds))
+      .sort((a,b)=>Number(a.id)-Number(b.id));
+
+    const porNombre=(texto)=>capas.find(c=>texto(normalizar(c.name||c.title||"")));
+
+    const convocatoria=porNombre(n=>n.includes("CONVOC"));
+    const potencial=porNombre(n=>n.includes("POTENC"));
+    const beneficiario=porNombre(n=>n.includes("BENEFICI") && !n.includes("POTENC"));
+
+    // Respaldo para la estructura conocida de tres subcapas: 0, 1 y 2.
+    return {
+      convocatoria:convocatoria||capas[0]||{id:0},
+      potencial:potencial||capas[1]||{id:1},
+      beneficiario:beneficiario||capas[2]||{id:2}
+    };
+  }
+
+  async function cargarIndicadorBae(){
+    try{
+      const capas=await obtenerCapasBae();
+      const [convocatoria,potencial,beneficiario]=await Promise.all([
+        contarCapaRest(`${URLS.bonosBae}/${capas.convocatoria.id}`),
+        contarCapaRest(`${URLS.bonosBae}/${capas.potencial.id}`),
+        contarCapaRest(`${URLS.bonosBae}/${capas.beneficiario.id}`)
+      ]);
+
+      // Potenciales BAE = Convocatoria + Potencial beneficiario.
+      const potencialBeneficiario=Number(convocatoria||0)+Number(potencial||0);
+
+      pintarIndicador("baePotencial","indBaePotencial",potencialBeneficiario,false);
+      pintarIndicador("baeBeneficiario","indBaeBeneficiario",beneficiario,false);
+    }catch(error){
+      console.warn("Indicadores BAE",error);
+      pintarIndicador("baePotencial","indBaePotencial",0,true);
+      pintarIndicador("baeBeneficiario","indBaeBeneficiario",0,true);
+    }
+  }
+
+  function ponerIndicadoresCargando(){
+    document.querySelectorAll(".indicatorCard:not(.placeholder)").forEach(card=>{
+      card.classList.add("loading");
+      card.classList.remove("error");
+      const valor=card.querySelector(".indicatorText strong");
+      if(valor) valor.textContent="—";
+    });
+
+    document.querySelectorAll(".indicatorCard.placeholder").forEach(card=>{
+      card.classList.remove("loading","error");
+      const valor=card.querySelector(".indicatorText strong");
+      if(valor) valor.textContent="—";
+    });
+  }
+
+  async function cargarIndicadoresServicios(){
+    ponerIndicadoresCargando();
+
+    const tareas=[
+      ["sares","indSares",()=>contarCapaRest(URLS.sares + "/0", "UPPER(entidad) = 'MVCS'")],
+      ["obrasEjecucion","indObrasEjecucion",()=>contarCapaRest(
+        PROY_URL,
+        "tipo_proyecto = 'OBRA' AND estado = 'EN EJECUCIÓN'"
+      )],
+      ["obrasCulminadas","indObrasCulminadas",()=>contarCapaRest(
+        PROY_URL,
+        "tipo_proyecto = 'OBRA' AND estado = 'CONCLUIDO'"
+      )],
+      ["maquinariaLimpieza","indMaquinariaLimpieza",()=>contarCapaRest(URLS.maquinariaOperativa)],
+      ["maquinariaSaneamientoDrenaje","indMaquinariaSaneamientoDrenaje",()=>contarCapaRest(URLS.maquinariaSaneamientoDrenaje)],
+      ["intervencionesEjecutadas","indIntervencionesEjecutadas",()=>contarCapaRest(URLS.intervencionesEjecutadas)],
+      ["intervencionesEjecucion","indIntervencionesEjecucion",()=>contarCapaRest(URLS.intervencionesEjecucion)],
+      ["intervencionesProgramadas","indIntervencionesProgramadas",()=>contarCapaRest(URLS.intervencionesXls)],
+      ["puntosCriticosPriorizados","indPuntosCriticosPriorizados",()=>contarCapaRest(URLS.puntosCriticosPriorizados)],
+      ["zonasExpuestas","indZonasExpuestas",()=>contarCapaRest(URLS.zonasExpuestasPeligro)]
+    ];
+
+    await Promise.all([
+      ...tareas.map(async([key,id,fn])=>{
+        try{ pintarIndicador(key,id,await fn(),false); }
+        catch(err){ console.warn("Indicador",key,err); pintarIndicador(key,id,0,true); }
+      }),
+      cargarIndicadorBae()
+    ]);
+  }
+
+  selProvincia.addEventListener("change",async function(){
+    try{
+      const idx=this.value;
+      selDistrito.innerHTML='<option value="">Todos los distritos</option>'; selDistrito.disabled=true; distritos=[]; seleccionLayer.removeAll();
+      $("topDistrito").textContent="Todos";
+      if(idx===""){
+        currentGeometry=piuraFeature.geometry;
+        provinciaView.filter={geometry:piuraFeature.geometry,spatialRelationship:"intersects"};
+        distritoView.filter={geometry:piuraFeature.geometry,spatialRelationship:"intersects"};
+        $("topProvincia").textContent="Todas";
+        $("kpiDistritos").textContent="—";
+        await actualizarProyectos(currentGeometry);
+        await aplicarFiltrosServicios();
+        await view.goTo(initialViewpoint,{duration:600});
+        setEstado("Mostrando todo el departamento de Piura");
+        return;
+      }
+      const feature=provincias[Number(idx)]; if(!feature) throw new Error("La provincia seleccionada no existe.");
+      currentGeometry=feature.geometry;
+      $("topProvincia").textContent=feature.attributes.nom_prov;
+      await cargarDistritos(feature);
+      resaltar(feature.geometry,"provincia");
+      await actualizarProyectos(feature.geometry);
+      await aplicarFiltrosServicios();
+      await view.goTo(feature.geometry.extent.expand(1.1),{duration:650});
+      setEstado("Provincia seleccionada: "+feature.attributes.nom_prov);
+    }catch(e){ console.error(e); setEstado(e.message||"No se pudo procesar la provincia.",true); }
+  });
+
+  selDistrito.addEventListener("change",async function(){
+    try{
+      const idx=this.value;
+      const prov=provincias[Number(selProvincia.value)];
+      if(idx===""){
+        if(prov){ currentGeometry=prov.geometry; $("topDistrito").textContent="Todos"; resaltar(prov.geometry,"provincia"); await actualizarProyectos(prov.geometry); await aplicarFiltrosServicios(); await view.goTo(prov.geometry.extent.expand(1.1),{duration:600}); setEstado("Provincia seleccionada: "+prov.attributes.nom_prov); }
+        return;
+      }
+      const feature=distritos[Number(idx)]; if(!feature) throw new Error("El distrito seleccionado no existe.");
+      currentGeometry=feature.geometry;
+      $("topDistrito").textContent=feature.attributes.nom_dist;
+      resaltar(feature.geometry,"distrito");
+      await actualizarProyectos(feature.geometry);
+      await aplicarFiltrosServicios();
+      await view.goTo(feature.geometry.extent.expand(1.14),{duration:650});
+      setEstado("Distrito seleccionado: "+feature.attributes.nom_dist);
+    }catch(e){ console.error(e); setEstado(e.message||"No se pudo procesar el distrito.",true); }
+  });
+
+  $("btnLimpiar").addEventListener("click",async()=>{
+    selProvincia.value=""; selDistrito.innerHTML='<option value="">Todos los distritos</option>'; selDistrito.disabled=true; seleccionLayer.removeAll();
+    $("topProvincia").textContent="Todas"; $("topDistrito").textContent="Todos"; $("kpiDistritos").textContent="—";
+    currentGeometry=piuraFeature.geometry;
+    provinciaView.filter={geometry:piuraFeature.geometry,spatialRelationship:"intersects"};
+    distritoView.filter={geometry:piuraFeature.geometry,spatialRelationship:"intersects"};
+    await actualizarProyectos(piuraFeature.geometry);
+    await aplicarFiltrosServicios();
+    if(initialViewpoint) await view.goTo(initialViewpoint,{duration:650});
+    setEstado("Mostrando todo el departamento de Piura");
+  });
+
+  $("btnZoom").addEventListener("click",async()=>{ if(currentGeometry) await view.goTo(currentGeometry.extent.expand(1.08),{duration:500}); });
+
+  const panelMap={btnLayers:"layersPanel",btnBudgetModerado:"budgetModeradoPanel",btnBudgetSevero:"budgetSeveroPanel",btnLegend:"legendPanel",btnBasemap:"basemapPanel"};
+  Object.entries(panelMap).forEach(([btnId,panelId])=>{
+    $(btnId).addEventListener("click",()=>{
+      Object.values(panelMap).forEach(id=>$(id).classList.toggle("open",id===panelId && !$(id).classList.contains("open")));
+      Object.keys(panelMap).forEach(id=>$(id).classList.toggle("active",id===btnId && $(panelId).classList.contains("open")));
+      const legendButton=$("btnLegend");
+      if(legendButton) legendButton.setAttribute("aria-expanded",String($("legendPanel").classList.contains("open")));
+    });
+  });
+  document.querySelectorAll("[data-close]").forEach(btn=>btn.addEventListener("click",()=>{
+    $(btn.dataset.close).classList.remove("open");
+    Object.keys(panelMap).forEach(id=>$(id).classList.remove("active"));
+    const legendButton=$("btnLegend");
+    if(legendButton) legendButton.setAttribute("aria-expanded","false");
+  }));
+
+  view.when(async()=>{
+    try{
+      await Promise.all([
+        departamentoLayer.load(),
+        provinciaLayer.load(),
+        distritoLayer.load(),
+        proyectosLayer.load(),
+        proyectosPistasVeredasLayer.load(),
+        proyectosSaneamientoLayer.load()
+      ]);
+
+      [
+        departamentoView,
+        provinciaView,
+        distritoView,
+        proyectosView,
+        proyectosPistasVeredasView,
+        proyectosSaneamientoView
+      ]=await Promise.all([
+        view.whenLayerView(departamentoLayer),
+        view.whenLayerView(provinciaLayer),
+        view.whenLayerView(distritoLayer),
+        view.whenLayerView(proyectosLayer),
+        view.whenLayerView(proyectosPistasVeredasLayer),
+        view.whenLayerView(proyectosSaneamientoLayer)
+      ]);
+      await queryPiura();
+      await cargarProvincias();
+      await actualizarProyectos(piuraFeature.geometry);
+      await aplicarFiltrosServicios();
+      setEstado("Mostrando todo el departamento de Piura");
+    }catch(e){ console.error("Inicialización:",e); setEstado(e.message||"No fue posible cargar los servicios GIS.",true); }
+  });
+});
+
+
+</script>
+</body>
+</html>
