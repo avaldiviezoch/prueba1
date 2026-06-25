@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Despliegue del MVCS ante el desafío de “El Niño”</title>
+
+  <style>
+    :root{
+      --vino:#7f1737;
+      --fondo:#eef1f4;
+    }
+
+    *{box-sizing:border-box}
+
+    html,body{
+      width:100%;
+      height:100%;
+      margin:0;
+      overflow:hidden;
+      background:var(--fondo);
+      font-family:"Segoe UI",Arial,sans-serif;
+    }
+
+    #visor{
+      position:fixed;
+      inset:0;
+      width:100%;
+      height:100%;
+      border:0;
+      background:var(--fondo);
+    }
+
+    #cargando{
+      position:fixed;
+      inset:0;
+      z-index:10;
+      display:grid;
+      place-items:center;
+      background:var(--fondo);
+      transition:opacity .2s ease, visibility .2s ease;
+    }
+
+    #cargando.oculto{
+      opacity:0;
+      visibility:hidden;
+      pointer-events:none;
+    }
+
+    .loader{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      padding:14px 18px;
+      color:var(--vino);
+      background:#fff;
+      border:1px solid #dce2e8;
+      border-radius:14px;
+      box-shadow:0 12px 30px rgba(15,23,42,.13);
+      font-size:13px;
+      font-weight:800;
+    }
+
+    .spinner{
+      width:20px;
+      height:20px;
+      border:3px solid #ead4dc;
+      border-top-color:var(--vino);
+      border-radius:50%;
+      animation:girar .75s linear infinite;
+    }
+
+    @keyframes girar{
+      to{transform:rotate(360deg)}
+    }
+  </style>
+</head>
+
+<body>
+  <div id="cargando">
+    <div class="loader">
+      <span class="spinner" aria-hidden="true"></span>
+      <span>Cargando visor de Piura…</span>
+    </div>
+  </div>
+
+  <iframe
+    id="visor"
+    title="Dashboard territorial de Piura"
+    allow="fullscreen; geolocation; clipboard-write"
+    loading="eager">
+  </iframe>
+
+  <script>
+    (() => {
+      const LIMITE_MOVIL = 900;
+      const parametros = new URLSearchParams(window.location.search);
+      const modoForzado = (parametros.get("modo") || "").toLowerCase();
+
+      /*
+        Archivos actualmente ubicados en la misma carpeta:
+        - Escritorio: ultimo_2.html
+        - Móvil:      ultimo movil_2.html
+      */
+      const ARCHIVO_PC = "ultimo_2.html";
+      const ARCHIVO_MOVIL = "ultimo movil_2.html";
+
+      const esPantallaMovil = window.matchMedia(
+        `(max-width: ${LIMITE_MOVIL}px)`
+      ).matches;
+
+      let archivo;
+
+      if (modoForzado === "pc" || modoForzado === "desktop") {
+        archivo = ARCHIVO_PC;
+      } else if (modoForzado === "movil" || modoForzado === "mobile") {
+        archivo = ARCHIVO_MOVIL;
+      } else {
+        archivo = esPantallaMovil ? ARCHIVO_MOVIL : ARCHIVO_PC;
+      }
+
+      const visor = document.getElementById("visor");
+      const cargando = document.getElementById("cargando");
+
+      visor.addEventListener("load", () => {
+        cargando.classList.add("oculto");
+      }, { once:true });
+
+      /*
+        encodeURI permite trabajar correctamente con el espacio
+        existente en el nombre "ultimo movil_2.html".
+      */
+      visor.src = encodeURI(archivo);
+    })();
+  </script>
+</body>
+</html>
