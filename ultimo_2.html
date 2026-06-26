@@ -1594,6 +1594,30 @@
     }
 
   
+    /* =========================================================
+       AJUSTE FINAL · LEYENDA ENTRE EL FILTRO Y SU BOTÓN
+       - El panel se alinea con la tarjeta del filtro territorial.
+       - Su altura termina antes del botón de leyenda.
+       - Al aumentar las capas, el contenido usa desplazamiento interno.
+       ========================================================= */
+    #legendPanel{
+      right:auto !important;
+      bottom:auto !important;
+      min-height:0 !important;
+      overflow:hidden !important;
+    }
+
+    #legendPanel .toolPanelBody{
+      min-height:0 !important;
+      overflow-x:hidden !important;
+      overflow-y:auto !important;
+      overscroll-behavior:contain;
+    }
+
+    #legendWrap{
+      min-height:0 !important;
+    }
+
     /* Jerarquía interna VULNERABILIDAD > PROYECTOS */
     .layerTreeNestedGroup{
       background:#fff;
@@ -1614,7 +1638,331 @@
       font-weight:900;
     }
 
-  </style>
+
+
+    /*
+      Seguridad visual: el contenedor nativo de ArcGIS no se muestra.
+      La información se presenta mediante .customMapPopup.
+    */
+    #viewDiv .esri-popup,
+    #viewDiv .esri-popup__main-container{
+      display:none !important;
+    }
+
+    /* =========================================================
+       POP-UP PERSONALIZADO · TARJETA HTML
+       Reemplaza el aspecto nativo de ArcGIS únicamente en las
+       capas configuradas, sin alterar filtros, simbología ni KPI.
+       ========================================================= */
+    .customMapPopup{
+      --popup-accent:var(--vino);
+      position:absolute;
+      z-index:140;
+      width:min(430px,calc(100% - 28px));
+      max-height:min(520px,calc(100% - 28px));
+      display:none;
+      grid-template-rows:auto minmax(0,1fr);
+      color:#172033;
+      background:#fff;
+      border:1px solid #dfe4ea;
+      border-radius:17px;
+      box-shadow:0 20px 46px rgba(15,23,42,.26);
+      overflow:hidden;
+      pointer-events:auto;
+      transform-origin:top left;
+    }
+
+    .customMapPopup.open{
+      display:grid;
+      animation:customPopupIn .16s ease-out;
+    }
+
+    @keyframes customPopupIn{
+      from{opacity:0;transform:translateY(5px) scale(.985)}
+      to{opacity:1;transform:translateY(0) scale(1)}
+    }
+
+    .customMapPopup::before{
+      content:"";
+      position:absolute;
+      left:0;
+      right:0;
+      top:0;
+      height:5px;
+      background:var(--popup-accent);
+      z-index:2;
+    }
+
+    .customPopupHead{
+      padding:17px 14px 12px;
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:12px;
+      background:#fff;
+      border-bottom:1px solid #edf0f3;
+    }
+
+    .customPopupHeadMain{
+      min-width:0;
+      display:flex;
+      align-items:flex-start;
+      gap:10px;
+    }
+
+    .customPopupDot{
+      width:11px;
+      height:11px;
+      margin-top:3px;
+      flex:0 0 11px;
+      border-radius:999px;
+      background:var(--popup-accent);
+      box-shadow:0 0 0 4px color-mix(in srgb,var(--popup-accent) 16%,transparent);
+    }
+
+    .customPopupHeading{min-width:0}
+
+    .customPopupTitle{
+      margin:0;
+      color:#101828;
+      font-size:13px;
+      line-height:1.28;
+      font-weight:900;
+      letter-spacing:.02px;
+      overflow-wrap:anywhere;
+    }
+
+    .customPopupSubtitle{
+      display:inline-flex;
+      margin-top:6px;
+      padding:4px 8px;
+      border-radius:999px;
+      color:var(--popup-accent);
+      background:color-mix(in srgb,var(--popup-accent) 10%,#fff);
+      border:1px solid color-mix(in srgb,var(--popup-accent) 22%,#fff);
+      font-size:9px;
+      line-height:1;
+      font-weight:900;
+      letter-spacing:.28px;
+      text-transform:uppercase;
+    }
+
+    .customPopupClose{
+      width:30px;
+      height:30px;
+      flex:0 0 30px;
+      display:grid;
+      place-items:center;
+      padding:0;
+      border:1px solid #dfe4ea;
+      border-radius:9px;
+      color:#344054;
+      background:#fff;
+      font-size:15px;
+      font-weight:900;
+      cursor:pointer;
+      transition:.15s ease;
+    }
+
+    .customPopupClose:hover{
+      color:#fff;
+      background:var(--popup-accent);
+      border-color:var(--popup-accent);
+    }
+
+    .customPopupBody{
+      min-height:0;
+      padding:12px;
+      overflow:auto;
+      overscroll-behavior:contain;
+      scrollbar-width:thin;
+      scrollbar-color:#b8bec7 #f2f4f7;
+      background:#fff;
+    }
+
+    .customPopupBody::-webkit-scrollbar{width:7px}
+    .customPopupBody::-webkit-scrollbar-track{background:#f2f4f7}
+    .customPopupBody::-webkit-scrollbar-thumb{background:#b8bec7;border-radius:999px}
+
+    .customPopupSection + .customPopupSection{margin-top:13px}
+
+    .customPopupSectionTitle{
+      margin:0 0 7px;
+      color:var(--popup-accent);
+      font-size:9px;
+      line-height:1.15;
+      font-weight:900;
+      letter-spacing:.45px;
+      text-transform:uppercase;
+    }
+
+    .customPopupGrid{
+      display:grid;
+      grid-template-columns:repeat(2,minmax(0,1fr));
+      gap:7px;
+    }
+
+    .customPopupField{
+      min-width:0;
+      padding:8px 9px;
+      border:1px solid #e7ebef;
+      border-radius:10px;
+      background:#f8fafc;
+    }
+
+    .customPopupField.full{grid-column:1/-1}
+
+    .customPopupLabel{
+      display:block;
+      margin-bottom:4px;
+      color:#667085;
+      font-size:8px;
+      line-height:1.1;
+      font-weight:900;
+      letter-spacing:.25px;
+      text-transform:uppercase;
+    }
+
+    .customPopupValue{
+      display:block;
+      color:#172033;
+      font-size:10.5px;
+      line-height:1.35;
+      font-weight:800;
+      overflow-wrap:anywhere;
+      white-space:pre-wrap;
+    }
+
+    .customPopupValue a{
+      color:var(--popup-accent);
+      font-weight:900;
+      text-decoration:none;
+    }
+
+    .customPopupValue a:hover{text-decoration:underline}
+
+    .customPopupEmpty{
+      padding:18px 12px;
+      color:#667085;
+      text-align:center;
+      font-size:11px;
+      font-weight:800;
+    }
+
+    @media(max-width:620px){
+      .customMapPopup{
+        width:calc(100% - 20px);
+        max-height:min(430px,calc(100% - 20px));
+      }
+      .customPopupGrid{grid-template-columns:1fr}
+      .customPopupField.full{grid-column:auto}
+    }
+
+  
+
+    /* =========================================================
+       OBSERVACIONES PRECISADAS · CABECERA, KPI Y MAPAS BASE
+       ========================================================= */
+    .headerInstitution{
+      margin-left:auto;
+      display:flex;
+      flex-direction:column;
+      align-items:flex-end;
+      gap:3px;
+      max-width:330px;
+      color:rgba(255,255,255,.94);
+      text-align:right;
+      font-size:9.5px;
+      line-height:1.2;
+      font-weight:800;
+      letter-spacing:.18px;
+    }
+
+    .basemapOnlyGrid{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:10px;
+      padding:12px;
+      background:#fff;
+    }
+
+    .basemapChoice{
+      min-height:92px;
+      padding:12px 8px;
+      border:1px solid #d8dee6;
+      border-radius:13px;
+      background:#fff;
+      color:#344054;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      gap:8px;
+      cursor:pointer;
+      font-size:11px;
+      font-weight:900;
+      text-align:center;
+      transition:.16s ease;
+    }
+
+    .basemapChoice:hover{
+      transform:translateY(-1px);
+      border-color:#b56a82;
+      background:#fbf4f7;
+    }
+
+    .basemapChoice.active{
+      color:var(--vino);
+      border-color:var(--vino);
+      background:#f9eaf0;
+      box-shadow:0 0 0 3px rgba(127,23,55,.10);
+    }
+
+    .basemapChoiceIcon{font-size:25px;line-height:1}
+
+    @media(min-width:1001px){
+      .indicatorGrid{
+        grid-template-rows:repeat(2,minmax(0,1fr)) 150px !important;
+      }
+      .indicatorCard:nth-child(1),
+      .indicatorCard:nth-child(2),
+      .indicatorCard:nth-child(3),
+      .indicatorCard:nth-child(4),
+      .indicatorCard:nth-child(5),
+      .indicatorCard:nth-child(6),
+      .indicatorCard:nth-child(7),
+      .indicatorCard:nth-child(8),
+      .indicatorCard:nth-child(9),
+      .indicatorCard:nth-child(10){grid-row:3 !important}
+      .indicatorCard:nth-child(11){
+        grid-column:10 !important;
+        grid-row:2 !important;
+        height:auto !important;
+        min-height:0 !important;
+        max-height:none !important;
+      }
+      .indicatorCard:nth-child(12){
+        grid-column:10 !important;
+        grid-row:1 !important;
+        height:auto !important;
+        min-height:0 !important;
+        max-height:none !important;
+      }
+    }
+
+    @media(max-width:900px){
+      .headerInstitution{
+        margin-left:0;
+        align-items:flex-start;
+        text-align:left;
+        font-size:8.5px;
+      }
+    }
+
+    @media(max-width:560px){
+      .basemapOnlyGrid{grid-template-columns:1fr}
+    }
+</style>
 </head>
 <body>
   <div class="app">
@@ -1622,6 +1970,10 @@
       <div class="brand">
         <h1>Despliegue del MVCS ante el desafío de “El Niño”</h1>
         <p><em>Prevención, seguimiento y respuesta en la región Piura</em></p>
+      </div>
+      <div class="headerInstitution" aria-label="Identificación institucional">
+        <span>Oficina General de Estadística e Informática</span>
+        <span>Oficina de Estudios Estadísticos y Económicos</span>
       </div>
       <div class="topKpis">
         <div class="topKpi"><span>Ámbito</span><strong>Piura</strong></div>
@@ -1632,6 +1984,8 @@
 
     <main class="workspace">
       <div id="viewDiv"></div>
+
+      <div id="customMapPopup" class="customMapPopup" role="dialog" aria-live="polite" aria-label="Detalle del elemento seleccionado"></div>
 
       <aside class="dashboardPanel">
         <div class="panelHead">
@@ -1714,7 +2068,7 @@
                 </div>
                 <div class="indicatorText">
                   <strong id="indBaePotencial">—</strong>
-                  <span>Bonos BAE · Potenciales beneficiarios</span>
+                  <span>Bonos BAE Convocados</span>
                 </div>
               </div>
 
@@ -1758,7 +2112,7 @@
                 </div>
                 <div class="indicatorText">
                   <strong id="indIntervencionesEjecutadas">—</strong>
-                  <span>Intervenciones ejecutadas</span>
+                  <span>Intervenciones maquinarias ejecutadas</span>
                 </div>
               </div>
 
@@ -1769,7 +2123,7 @@
                 </div>
                 <div class="indicatorText">
                   <strong id="indIntervencionesEjecucion">—</strong>
-                  <span>Intervenciones en ejecución</span>
+                  <span>Intervenciones maquinarias en ejecución</span>
                 </div>
               </div>
 
@@ -1780,40 +2134,29 @@
                 </div>
                 <div class="indicatorText">
                   <strong id="indIntervencionesProgramadas">—</strong>
+                  <span>Intervenciones maquinarias programadas · Escenario severo</span>
+                </div>
+              </div>
+
+              <!-- 11 · INTERVENCIONES PROGRAMADAS · ESCENARIO MODERADO -->
+              <div class="indicatorCard loading" data-indicator="intervencionesProgramadasModerado">
+                <div class="indicatorIcon">
+                  <svg viewBox="0 0 24 24"><path d="M5 3h2v2h10V3h2v2h2v16H3V5h2V3Zm14 7H5v9h14v-9ZM7 12h4v2H7v-2Zm0 4h7v2H7v-2Z"/></svg>
+                </div>
+                <div class="indicatorText">
+                  <strong id="indIntervencionesProgramadasModerado">—</strong>
                   <span>Intervenciones maquinarias programadas · Escenario moderado</span>
                 </div>
               </div>
 
-              <!-- 11 · PUNTOS CRÍTICOS PRIORIZADOS · PENDIENTE -->
+              <!-- 12 · PUNTOS CRÍTICOS PRIORIZADOS -->
               <div class="indicatorCard loading" data-indicator="puntosCriticosPriorizados">
                 <div class="indicatorIcon">
                   <svg viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 0-7 7c0 5.1 7 13 7 13s7-7.9 7-13a7 7 0 0 0-7-7Zm0 4 1.1 2.2 2.4.4-1.8 1.7.4 2.4-2.1-1.1-2.1 1.1.4-2.4-1.8-1.7 2.4-.4L12 6Z"/></svg>
                 </div>
                 <div class="indicatorText">
                   <strong id="indPuntosCriticosPriorizados">—</strong>
-                  <span>Puntos críticos priorizados</span>
-                </div>
-              </div>
-
-              <!-- 12 · PUNTOS CRÍTICOS -->
-              <div class="indicatorCard placeholder" data-indicator="puntosCriticos">
-                <div class="indicatorIcon">
-                  <svg viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 0-7 7c0 5.1 7 13 7 13s7-7.9 7-13a7 7 0 0 0-7-7Zm0 4a3 3 0 1 1 0 6 3 3 0 0 1 0-6Z"/></svg>
-                </div>
-                <div class="indicatorText">
-                  <strong id="indPuntosCriticos">—</strong>
-                  <span>Puntos críticos</span>
-                </div>
-              </div>
-
-              <!-- 13 · ZONAS EXPUESTAS AL PELIGRO -->
-              <div class="indicatorCard loading" data-indicator="zonasExpuestas">
-                <div class="indicatorIcon">
-                  <svg viewBox="0 0 24 24"><path d="M12 2 1 21h22L12 2Zm0 5 6.1 11H5.9L12 7Zm-1 3v4h2v-4h-2Zm0 6v2h2v-2h-2Z"/></svg>
-                </div>
-                <div class="indicatorText">
-                  <strong id="indZonasExpuestas">—</strong>
-                  <span>Zonas expuestas al peligro</span>
+                  <span>Puntos críticos priorizados por el PNC – Escenario severo</span>
                 </div>
               </div>
 
@@ -1825,11 +2168,11 @@
         <button id="btnLayers" class="toolBtn" type="button" title="Lista de capas" aria-label="Lista de capas">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 2.8 8 12 13l9.2-5L12 3Zm-7.4 8.2L12 15.3l7.4-4.1 1.8 1L12 17.3l-9.2-5.1 1.8-1Zm0 4L12 19.3l7.4-4.1 1.8 1L12 21.3l-9.2-5.1 1.8-1Z"/></svg>
         </button>
-        <button id="btnBudgetModerado" class="toolBtn budgetModeradoBtn" type="button" title="Presupuesto · Maquinarias escenario moderado" aria-label="Presupuesto · Maquinarias escenario moderado">
-          <span class="budgetCurrencyIcon budgetCurrencyIconModerado" aria-hidden="true">S/.</span>
-        </button>
-        <button id="btnBudgetSevero" class="toolBtn budgetSeveroBtn" type="button" title="Presupuesto · Maquinarias escenario severo" aria-label="Presupuesto · Maquinarias escenario severo">
+        <button id="btnBudgetSevero" class="toolBtn budgetSeveroBtn" type="button" title="Presupuesto escenario severo" aria-label="Presupuesto escenario severo">
           <span class="budgetCurrencyIcon" aria-hidden="true">S/.</span>
+        </button>
+        <button id="btnBudgetModerado" class="toolBtn budgetModeradoBtn" type="button" title="Presupuesto escenario moderado" aria-label="Presupuesto escenario moderado">
+          <span class="budgetCurrencyIcon budgetCurrencyIconModerado" aria-hidden="true">S/.</span>
         </button>
         <button id="btnBasemap" class="toolBtn" type="button" title="Mapas base" aria-label="Mapas base">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 4 6-2v16l-6 2-6-2-6 2V4l6-2 6 2Zm-1 2.1-4-1.3v11.1l4 1.3V6.1Zm2-.1v11.4l3-1V5l-3 1ZM5 5.4v11.8l3-1V4.4l-3 1Z"/></svg>
@@ -1853,16 +2196,16 @@
         <div id="legendWrap" class="toolPanelBody"></div>
       </section>
 
-      <section id="budgetModeradoPanel" class="toolPanel budgetPanel" aria-label="Presupuesto · Maquinarias escenario moderado">
+      <section id="budgetModeradoPanel" class="toolPanel budgetPanel" aria-label="Presupuesto escenario moderado">
         <div class="toolPanelHead budgetHeadModerado">
-          <strong>Presupuesto · Maquinarias escenario moderado</strong>
-          <button class="closePanel" data-close="budgetModeradoPanel" aria-label="Cerrar presupuesto · maquinarias escenario moderado">✕</button>
+          <strong>Presupuesto escenario moderado</strong>
+          <button class="closePanel" data-close="budgetModeradoPanel" aria-label="Cerrar presupuesto escenario moderado">✕</button>
         </div>
         <div class="toolPanelBody budgetPanelBody">
           <div class="budgetImageViewport">
           <img
             class="budgetImage"
-            src="https://drive.google.com/thumbnail?id=1BUrUBYBuOW0GBiFc8gKuXUtdwph_vEQU&sz=w1600"
+            src="https://drive.google.com/thumbnail?id=1zWuGJrhk65nixYs6ilAiMhokpFZXUCwl&sz=w1600"
             alt="Escenario moderado"
             loading="lazy"
             decoding="async"
@@ -1872,16 +2215,16 @@
         </div>
       </section>
 
-      <section id="budgetSeveroPanel" class="toolPanel budgetPanel" aria-label="Presupuesto · Maquinarias escenario severo">
+      <section id="budgetSeveroPanel" class="toolPanel budgetPanel" aria-label="Presupuesto escenario severo">
         <div class="toolPanelHead budgetHeadSevero">
-          <strong>Presupuesto · Maquinarias escenario severo</strong>
-          <button class="closePanel" data-close="budgetSeveroPanel" aria-label="Cerrar presupuesto · maquinarias escenario severo">✕</button>
+          <strong>Presupuesto escenario severo</strong>
+          <button class="closePanel" data-close="budgetSeveroPanel" aria-label="Cerrar presupuesto escenario severo">✕</button>
         </div>
         <div class="toolPanelBody budgetPanelBody">
           <div class="budgetImageViewport">
           <img
             class="budgetImage"
-            src="https://drive.google.com/thumbnail?id=1xsjcsaBv_Aj3IvLBIIMNoa_cncuGCaMB&sz=w1600"
+            src="https://drive.google.com/thumbnail?id=1Rs_cmmIZKEty3sy7xGOmXnHg5ZfO9gM6&sz=w1600"
             alt="Escenario severo"
             loading="lazy"
             decoding="async"
@@ -1920,18 +2263,22 @@ require([
     maquinariaOperativa: "https://portalgis.vivienda.gob.pe/servergis/rest/services/OGEI/Maquinarias_Piura/MapServer/1",
     maquinariaSaneamientoDrenaje: "https://portalgis.vivienda.gob.pe/servergis/rest/services/OGEI/Maquinarias_Genesis/MapServer/0",
     puntosCriticosPriorizados: "https://portalgis.vivienda.gob.pe/servergis/rest/services/OGEI/Mapa_Puntos_Criticos_Piura/MapServer/3",
+    puntosCriticos: "https://portalgis.vivienda.gob.pe/servergis/rest/services/OGEI/Mapa_Puntos_Criticos_Piura/MapServer/0",
     sares: "https://portalgis.vivienda.gob.pe/servergis/rest/services/OGEI/Mapa_visor_sare_PIURA/MapServer",
     cuencasCofopri: "https://portalgis.vivienda.gob.pe/servergis/rest/services/OGEI/Mapa_Cuencas_Cofopri/MapServer",
     zonasInundadas2017: "https://portalgis.vivienda.gob.pe/servergis/rest/services/OGEI/Mapa_Inundacion_Piura/MapServer/1",
     zonasExpuestasPeligro: "https://portalgis.vivienda.gob.pe/servergis/rest/services/OGEI/Mapa_Inundacion_Piura/MapServer/2",
     riesgoInundacion: "https://portalgis.vivienda.gob.pe/servergis/rest/services/OGEI/Mapa_Inundacion_Piura/MapServer/0",
+    quebradas: "https://portalgis.vivienda.gob.pe/servergis/rest/services/EXTERNAS/Mapa_Quebradas_IGN/MapServer/0",
+    zonasRiesgoNoMitigables: "https://pportalgis.vivienda.gob.pe/pfdserver/rest/services/PNC_UGERDES/WM_Geovisor_GRD_PUBLICAR/MapServer",
     componentes: "https://portalgis.vivienda.gob.pe/servergis/rest/services/OGEI/Mapa_Componentes_Proyectos/FeatureServer/0",
     viviendasRurales: "https://portalgis.vivienda.gob.pe/servergis/rest/services/viviendas_rurales_piura/MapServer",
     manzanasAgua: "https://portalgis.vivienda.gob.pe/servergis/rest/services/manzanas_agua_y_saneamiento_piura/MapServer",
     catastroTecnico: "https://portalgis.vivienda.gob.pe/servergis/rest/services/catastro_tecnico_comercial_sunass_PIURA/MapServer/0",
     intervencionesEjecucion: "https://portalgis.vivienda.gob.pe/servergis/rest/services/OGEI/Mapa_intervenciones_PNC_GeoVisor_PIURA/MapServer/0",
     intervencionesEjecutadas: "https://portalgis.vivienda.gob.pe/servergis/rest/services/OGEI/Mapa_intervenciones_PNC_GeoVisor_PIURA/MapServer/1",
-    intervencionesXls: "https://portalgis.vivienda.gob.pe/servergis/rest/services/OGEI/Mapa_intervenciones_PNC_GeoVisor_PIURA/MapServer/3",
+    intervencionesSevero: "https://portalgis.vivienda.gob.pe/servergis/rest/services/OGEI/Mapa_intervenciones_PNC_GeoVisor_PIURA/MapServer/4",
+    intervencionesModerado: "https://portalgis.vivienda.gob.pe/servergis/rest/services/OGEI/Mapa_intervenciones_PNC_GeoVisor_PIURA/MapServer/5",
     bonosBae: "https://portalgis.vivienda.gob.pe/servergis/rest/services/bae_piura/MapServer"
   };
 
@@ -1940,7 +2287,7 @@ require([
   const selDistrito = $("selDistrito");
   const estado = $("estado");
 
-  const map = new Map({ basemap:"terrain" });
+  const map = new Map({ basemap:"topo-vector" });
   const view = new MapView({
     container:"viewDiv",
     map,
@@ -1948,8 +2295,22 @@ require([
     zoom:7,
     constraints:{ minZoom:5, snapToZoom:false },
     popup:{
-      defaultPopupTemplateEnabled:true,
+      autoOpenEnabled:false,
+      defaultPopupTemplateEnabled:false,
       dockEnabled:false
+    }
+  });
+
+  /*
+    El pop-up nativo de ArcGIS queda desactivado de forma global.
+    Las capas configuradas más abajo se muestran únicamente mediante
+    la tarjeta HTML personalizada del dashboard.
+  */
+  view.when(() => {
+    if(view.popup){
+      view.popup.autoOpenEnabled = false;
+      view.popup.defaultPopupTemplateEnabled = false;
+      view.popup.close();
     }
   });
   view.ui.remove("zoom");
@@ -2082,8 +2443,8 @@ require([
       symbol:{
         type:"picture-marker",
         url:crearRomboProyecto("#a62650","pistas"),
-        width:28,
-        height:28
+        width:18,
+        height:18
       }
     },
     popupTemplate:{
@@ -2112,8 +2473,8 @@ require([
       symbol:{
         type:"picture-marker",
         url:crearRomboProyecto("#1976a8","saneamiento"),
-        width:28,
-        height:28
+        width:18,
+        height:18
       }
     },
     popupTemplate:{
@@ -2215,12 +2576,59 @@ require([
     "tipo_proyecto = 'OBRA' AND estado = 'EN EJECUCIÓN'";
 
   /* ================= CAPAS NUEVAS · TODAVÍA SIN FILTRO TERRITORIAL ================= */
+
+  /*
+    MAQUINARIAS · LIMPIEZA Y DESCOLMATACIÓN
+    Se reemplaza la categorización original por GPS por un único símbolo,
+    de modo que el mapa y la leyenda presenten una sola categoría de maquinaria.
+  */
+  function crearIconoUnicoMaquinaria(color="#7f1737"){
+    const svg = `
+      <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48">
+        <circle cx="24" cy="24" r="21.5" fill="#ffffff" stroke="${color}" stroke-width="2.3"/>
+        <circle cx="24" cy="24" r="16.8" fill="${color}" opacity="0.10"/>
+
+        <!-- cabina -->
+        <path d="M16.2 25.5h14.6l-2.7-8.1h-7.8l-4.1 8.1Z"
+              fill="${color}"/>
+        <path d="M21.3 18.9h5.8l1.7 5.1h-10l2.5-5.1Z"
+              fill="#ffffff" opacity="0.92"/>
+
+        <!-- brazo y cuchara -->
+        <path d="M29.6 19.6 35 23.3l-2 2.8-4.8-3.3 1.4-3.2Z"
+              fill="${color}"/>
+        <path d="M34.5 23.8 39 26.7l-2.2 4.1-5.4-2.3 3.1-4.7Z"
+              fill="${color}"/>
+
+        <!-- base -->
+        <rect x="13.2" y="25.2" width="20" height="5.8" rx="2.2" fill="${color}"/>
+
+        <!-- ruedas -->
+        <circle cx="18.2" cy="32.4" r="3.3" fill="${color}"/>
+        <circle cx="28.3" cy="32.4" r="3.3" fill="${color}"/>
+        <circle cx="18.2" cy="32.4" r="1.25" fill="#ffffff"/>
+        <circle cx="28.3" cy="32.4" r="1.25" fill="#ffffff"/>
+      </svg>`;
+
+    return "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(svg);
+  }
+
   const maquinariaOperativa = new FeatureLayer({
     url:URLS.maquinariaOperativa,
     title:"Maquinarias · Limpieza y descolmatación",
     visible:false,
     outFields:["*"],
-    popupEnabled:true
+    popupEnabled:true,
+    renderer:{
+      type:"simple",
+      label:"Maquinarias",
+      symbol:{
+        type:"picture-marker",
+        url:crearIconoUnicoMaquinaria("#7f1737"),
+        width:17,
+        height:17
+      }
+    }
   });
 
   const maquinariaSaneamientoDrenajeLayer = new FeatureLayer({
@@ -2228,8 +2636,52 @@ require([
     title:"Maquinarias · Servicio de saneamiento y drenaje",
     visible:false,
     outFields:["*"],
-    popupEnabled:true
+    popupEnabled:true,
+    definitionExpression:
+      "UPPER(departamento) = 'PIURA' AND UPPER(programa) IN ('OTASS','PNSR','PNSU')"
   });
+  maquinariaSaneamientoDrenajeLayer.__baseWhere =
+    "UPPER(departamento) = 'PIURA' AND UPPER(programa) IN ('OTASS','PNSR','PNSU')";
+
+  /*
+    MAQUINARIAS · SANEAMIENTO Y DRENAJE
+    La capa conserva únicamente los programas de Piura solicitados.
+    También se limpia el renderer para que SEDAPAL y Other/Others
+    no aparezcan en la leyenda aunque formen parte de la simbología
+    publicada originalmente en el servicio.
+  */
+  function normalizarCategoriaPrograma(valor){
+    return String(valor ?? "").trim().toUpperCase();
+  }
+
+  function programaMaquinariaPermitido(valor){
+    return ["OTASS","PNSR","PNSU"].includes(normalizarCategoriaPrograma(valor));
+  }
+
+  async function prepararSimbologiaMaquinariaSaneamiento(){
+    try{
+      await maquinariaSaneamientoDrenajeLayer.load();
+      const rendererOriginal=maquinariaSaneamientoDrenajeLayer.renderer;
+      if(!rendererOriginal) return;
+
+      const renderer=rendererOriginal.clone
+        ? rendererOriginal.clone()
+        : rendererOriginal;
+
+      if(renderer.type==="unique-value"){
+        renderer.uniqueValueInfos=Array.from(renderer.uniqueValueInfos||[])
+          .filter(info=>
+            programaMaquinariaPermitido(info.value) ||
+            programaMaquinariaPermitido(info.label)
+          );
+        renderer.defaultSymbol=null;
+        renderer.defaultLabel="";
+        maquinariaSaneamientoDrenajeLayer.renderer=renderer;
+      }
+    }catch(error){
+      console.warn("No se pudo depurar la simbología de Maquinarias · Saneamiento y drenaje:",error);
+    }
+  }
 
   const saresLayer = new MapImageLayer({
     url:URLS.sares,
@@ -2241,9 +2693,152 @@ require([
   // Aplica entidad = MVCS a toda subcapa SARES que contenga ese campo.
   saresLayer.__entityFilterValue = "MVCS";
 
+  /* =========================================================
+     SARES · ICONO POI COMPACTO
+     - La capa 0 se dibuja como FeatureLayer para poder utilizar
+       un pictograma circular pequeño, similar a los POI de Esri.
+     - Se conservan las categorías del servicio y se utiliza un color
+       vino de alto contraste para que los puntos destaquen en el mapa.
+     - Se elimina el símbolo/categoría predeterminada Other/Others.
+     ========================================================= */
+  function crearIconoPoiSare(color="#1976a8"){
+    const svg = `
+      <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 28 28">
+        <circle cx="14" cy="14" r="12.2" fill="#ffffff" stroke="#aeb4bc" stroke-width="1.5"/>
+        <circle cx="14" cy="14" r="9.2" fill="#ffffff"/>
+        <path d="M8.5 13.2 14 8.7l5.5 4.5v6.1h-4v-3.8h-3v3.8h-4v-6.1Z"
+              fill="none" stroke="${color}" stroke-width="1.55"
+              stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M18.1 8.1c-1.25 1.65-2.15 2.75-2.15 3.85a2.15 2.15 0 0 0 4.3 0c0-1.1-.9-2.2-2.15-3.85Z"
+              fill="#ffffff" stroke="${color}" stroke-width="1.25"/>
+      </svg>`;
+
+    return "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(svg);
+  }
+
+  function colorHexSimbolo(symbol,fallback="#1976a8"){
+    try{
+      const color=symbol?.color;
+      if(!color) return fallback;
+      if(typeof color.toHex==="function") return color.toHex();
+      if(typeof color.toRgba==="function"){
+        const [r,g,b]=color.toRgba();
+        return `#${[r,g,b].map(v=>Math.max(0,Math.min(255,Math.round(v))).toString(16).padStart(2,"0")).join("")}`;
+      }
+      if(Array.isArray(color)){
+        return `#${color.slice(0,3).map(v=>Math.max(0,Math.min(255,Math.round(v))).toString(16).padStart(2,"0")).join("")}`;
+      }
+    }catch(error){
+      console.warn("No se pudo recuperar el color original de SARES:",error);
+    }
+    return fallback;
+  }
+
+  function esCategoriaOtros(texto){
+    return /^(other|others|otro|otros|all other values|todos los demás valores)$/i
+      .test(String(texto||"").trim());
+  }
+
+  const saresPoiLayer = new FeatureLayer({
+    url:`${URLS.sares}/0`,
+    title:"SARES",
+    visible:false,
+    listMode:"hide",
+    outFields:["*"],
+    popupEnabled:true,
+    definitionExpression:"UPPER(ENTIDAD) = 'MVCS'"
+  });
+  saresPoiLayer.__baseWhere = "UPPER(ENTIDAD) = 'MVCS'";
+
+  async function prepararSimbologiaSares(){
+    try{
+      await Promise.all([saresLayer.loadAll(),saresPoiLayer.load()]);
+
+      /* Oculta únicamente la representación original de SARE (capa 0).
+         Las demás subcapas del servicio permanecen disponibles. */
+      const subcapas=saresLayer.allSublayers?.toArray?.()||[];
+      const sareOriginal=subcapas.find(sublayer=>
+        sublayer.id===0 || /^sare$/i.test(String(sublayer.title||"").trim())
+      );
+      if(sareOriginal){
+        sareOriginal.visible=false;
+        sareOriginal.legendEnabled=false;
+      }
+
+      const rendererOriginal=saresPoiLayer.renderer;
+      const renderer=rendererOriginal?.clone
+        ? rendererOriginal.clone()
+        : rendererOriginal;
+
+      if(!renderer){
+        saresPoiLayer.renderer={
+          type:"simple",
+          label:"SARES",
+          symbol:{
+            type:"picture-marker",
+            url:crearIconoPoiSare("#7f1737"),
+            width:14,
+            height:14
+          }
+        };
+        return;
+      }
+
+      if(renderer.type==="unique-value"){
+        const infos=Array.from(renderer.uniqueValueInfos||[])
+          .filter(info=>!esCategoriaOtros(info.label) && !esCategoriaOtros(info.value))
+          .map(info=>{
+            const copia=info?.clone ? info.clone() : {...info};
+            copia.symbol={
+              type:"picture-marker",
+              url:crearIconoPoiSare("#7f1737"),
+              width:14,
+              height:14
+            };
+            return copia;
+          });
+
+        renderer.uniqueValueInfos=infos;
+        renderer.defaultSymbol=null;
+        renderer.defaultLabel="";
+        saresPoiLayer.renderer=renderer;
+        return;
+      }
+
+      if(renderer.type==="class-breaks"){
+        renderer.classBreakInfos=Array.from(renderer.classBreakInfos||[])
+          .filter(info=>!esCategoriaOtros(info.label))
+          .map(info=>{
+            const copia=info?.clone ? info.clone() : {...info};
+            copia.symbol={
+              type:"picture-marker",
+              url:crearIconoPoiSare("#7f1737"),
+              width:14,
+              height:14
+            };
+            return copia;
+          });
+        renderer.defaultSymbol=null;
+        renderer.defaultLabel="";
+        saresPoiLayer.renderer=renderer;
+        return;
+      }
+
+      renderer.symbol={
+        type:"picture-marker",
+        url:crearIconoPoiSare("#7f1737"),
+        width:14,
+        height:14
+      };
+      saresPoiLayer.renderer=renderer;
+    }catch(error){
+      console.warn("No se pudo aplicar la simbología compacta de SARES:",error);
+    }
+  }
+
   const cuencasLayer = new MapImageLayer({
     url:URLS.cuencasCofopri,
-    title:"Cuencas COFOPRI",
+    title:"Cuencas Ciegas",
     visible:false,
     popupEnabled:true,
     opacity:.72
@@ -2276,9 +2871,35 @@ require([
     opacity:.72
   });
 
+  const quebradasLayer = new FeatureLayer({
+    url:URLS.quebradas,
+    title:"Quebradas",
+    visible:false,
+    outFields:["*"],
+    popupEnabled:true,
+    opacity:.9
+  });
+
+  /* =========================================================
+     ZONAS DE RIESGO NO MITIGABLES · SIN FILTROS
+     Se carga directamente la capa 3 del servicio para comprobar
+     su visualización. No recibe filtro por departamento,
+     provincia ni distrito.
+     ========================================================= */
+  const zonasRiesgoNoMitigablesLayer = new FeatureLayer({
+    url:`${URLS.zonasRiesgoNoMitigables}/3`,
+    title:"Zonas de Riesgo No Mitigables",
+    visible:false,
+    outFields:["*"],
+    popupEnabled:true,
+    opacity:.72
+  });
+  zonasRiesgoNoMitigablesLayer.__sinFiltroTerritorial = true;
+
+
   const puntosCriticosPriorizadosLayer = new FeatureLayer({
     url:URLS.puntosCriticosPriorizados,
-    title:"Tramos críticos priorizados PNC",
+    title:"Puntos críticos priorizados por el PNC – Escenario severo",
     visible:false,
     outFields:["*"],
     popupEnabled:true,
@@ -2302,6 +2923,53 @@ require([
           {fieldName:"prioridad",label:"Prioridad"},
           {fieldName:"tipo_pelig",label:"Tipo de peligro"},
           {fieldName:"nivel_peli",label:"Nivel de peligro"}
+        ]
+      }]
+    }
+  });
+
+  /* =========================================================
+     PUNTOS CRÍTICOS · FILTRABLES POR PROVINCIA Y DISTRITO
+     Campos territoriales publicados por el servicio:
+     provincia / distrito. La detección automática de campos
+     mantiene el KPI y los puntos sincronizados con los filtros.
+     ========================================================= */
+  const puntosCriticosLayer = new FeatureLayer({
+    url:URLS.puntosCriticos,
+    title:"Puntos críticos ANA",
+    visible:false,
+    outFields:["*"],
+    popupEnabled:true,
+    renderer:{
+      type:"simple",
+      symbol:{
+        type:"simple-marker",
+        style:"circle",
+        color:[22,96,150,.96],
+        size:8,
+        outline:{
+          color:[255,255,255,.98],
+          width:1.2
+        }
+      }
+    },
+    popupTemplate:{
+      title:"Punto crítico ANA {codigo}",
+      content:[{
+        type:"fields",
+        fieldInfos:[
+          {fieldName:"codigo",label:"Código"},
+          {fieldName:"provincia",label:"Provincia"},
+          {fieldName:"distrito",label:"Distrito"},
+          {fieldName:"sector",label:"Sector"},
+          {fieldName:"rio_qda",label:"Río / quebrada"},
+          {fieldName:"tipo",label:"Tipo"},
+          {fieldName:"peligro",label:"Peligro"},
+          {fieldName:"actividad",label:"Actividad"},
+          {fieldName:"familias",label:"Familias"},
+          {fieldName:"viviendas",label:"Viviendas"},
+          {fieldName:"periodo",label:"Periodo"},
+          {fieldName:"observacio",label:"Observación"}
         ]
       }]
     }
@@ -2412,13 +3080,13 @@ require([
 
   const intervencionesEjecucionLayer = new FeatureLayer({
     url:URLS.intervencionesEjecucion,
-    title:"Intervenciones en ejecución",
+    title:"Intervenciones maquinarias en ejecución",
     visible:false,
     outFields:["*"],
     popupEnabled:true,
     renderer:{
       type:"simple",
-      label:"Intervenciones en ejecución",
+      label:"Intervenciones maquinarias en ejecución",
       symbol:{
         type:"picture-marker",
         url:crearIconoIntervencion("#d99a00","ejecucion"),
@@ -2430,7 +3098,7 @@ require([
 
   const intervencionesEjecutadasLayer = new FeatureLayer({
     url:URLS.intervencionesEjecutadas,
-    title:"Intervenciones ejecutadas",
+    title:"Intervenciones maquinarias ejecutadas",
     visible:false,
     outFields:["*"],
     popupEnabled:true,
@@ -2446,18 +3114,36 @@ require([
     }
   });
 
-  const intervencionesXlsLayer = new FeatureLayer({
-    url:URLS.intervencionesXls,
-    title:"Intervenciones programadas",
+  const intervencionesSeveroLayer = new FeatureLayer({
+    url:URLS.intervencionesSevero,
+    title:"Intervenciones maquinarias programadas – Escenario severo",
     visible:false,
     outFields:["*"],
     popupEnabled:true,
     renderer:{
       type:"simple",
-      label:"Intervenciones programadas",
+      label:"Escenario severo",
       symbol:{
         type:"picture-marker",
-        url:crearIconoIntervencion("#4f6fc7","programada"),
+        url:crearIconoIntervencion("#8f1739","programada"),
+        width:22,
+        height:27
+      }
+    }
+  });
+
+  const intervencionesModeradoLayer = new FeatureLayer({
+    url:URLS.intervencionesModerado,
+    title:"Intervenciones maquinarias programadas – Escenario moderado",
+    visible:false,
+    outFields:["*"],
+    popupEnabled:true,
+    renderer:{
+      type:"simple",
+      label:"Escenario moderado",
+      symbol:{
+        type:"picture-marker",
+        url:crearIconoIntervencion("#747b85","programada"),
         width:22,
         height:27
       }
@@ -2529,8 +3215,8 @@ require([
       symbol:{
         type:"picture-marker",
         url:crearIconoPoiBae("#7e57c2","potencial"),
-        width:26,
-        height:26
+        width:13,
+        height:13
       }
     }
   });
@@ -2549,8 +3235,8 @@ require([
       symbol:{
         type:"picture-marker",
         url:crearIconoPoiBae("#7e57c2","potencial"),
-        width:26,
-        height:26
+        width:13,
+        height:13
       }
     }
   });
@@ -2580,8 +3266,8 @@ require([
       symbol:{
         type:"picture-marker",
         url:crearIconoPoiBae("#2e7d32","beneficiario"),
-        width:26,
-        height:26
+        width:13,
+        height:13
       }
     }
   });
@@ -2597,15 +3283,18 @@ require([
     obrasEjecucionLayer,
     maquinariaOperativa,
     maquinariaSaneamientoDrenajeLayer,
+    saresPoiLayer,
     zonasInundadasLayer,
     puntosCriticosPriorizadosLayer,
+    puntosCriticosLayer,
     zonasExpuestasPeligroLayer,
     riesgoInundacionLayer,
     componentesLayer,
     catastroTecnicoLayer,
     intervencionesEjecucionLayer,
     intervencionesEjecutadasLayer,
-    intervencionesXlsLayer,
+    intervencionesSeveroLayer,
+    intervencionesModeradoLayer,
     baeConvocatoriaLayer,
     baePotencialOriginalLayer,
     baeBeneficiarioLayer
@@ -2637,7 +3326,26 @@ require([
     }
   }
 
-  MAPIMAGE_LAYERS_FILTRABLES.forEach(activarPopupsMapImage);
+  MAPIMAGE_LAYERS_FILTRABLES
+    .filter(layer => layer !== saresLayer)
+    .forEach(activarPopupsMapImage);
+
+  /* SARES usa exclusivamente el pop-up HTML personalizado. */
+  (async()=>{
+    try{
+      await saresLayer.loadAll();
+      saresLayer.popupEnabled=false;
+      saresLayer.allSublayers?.forEach(sublayer=>{
+        sublayer.popupEnabled=false;
+        sublayer.popupTemplate=null;
+      });
+    }catch(error){
+      console.warn("No se pudieron bloquear los pop-ups nativos de SARES:",error);
+    }
+  })();
+
+  prepararSimbologiaSares();
+  prepararSimbologiaMaquinariaSaneamiento();
 
   const grupoActivos = new GroupLayer({
     title:"ACTIVOS",
@@ -2657,7 +3365,8 @@ require([
     layers:[
       baeBeneficiarioLayer,
       baePotencialLayer,
-      intervencionesXlsLayer,
+      intervencionesModeradoLayer,
+      intervencionesSeveroLayer,
       intervencionesEjecutadasLayer,
       intervencionesEjecucionLayer
     ]
@@ -2668,6 +3377,9 @@ require([
     visible:true,
     visibilityMode:"independent",
     layers:[
+      zonasRiesgoNoMitigablesLayer,
+      quebradasLayer,
+      puntosCriticosLayer,
       puntosCriticosPriorizadosLayer,
       zonasExpuestasPeligroLayer,
       riesgoInundacionLayer,
@@ -2713,9 +3425,11 @@ require([
     maquinariaOperativa,
     maquinariaSaneamientoDrenajeLayer,
     saresLayer,
+    saresPoiLayer,
     intervencionesEjecucionLayer,
     intervencionesEjecutadasLayer,
-    intervencionesXlsLayer,
+    intervencionesSeveroLayer,
+    intervencionesModeradoLayer,
     baePotencialLayer,
     baeBeneficiarioLayer,
     cuencasLayer,
@@ -2723,6 +3437,7 @@ require([
     riesgoInundacionLayer,
     zonasExpuestasPeligroLayer,
     puntosCriticosPriorizadosLayer,
+    puntosCriticosLayer,
     componentesLayer,
     proyectosLayer,
     proyectosPistasVeredasLayer,
@@ -2739,6 +3454,17 @@ require([
   departamentoLayer.visible = true;
   provinciaLayer.visible = true;
   distritoLayer.visible = true;
+
+  function actualizarVisibilidadSaresPoi(){
+    const grupoPadre=saresLayer.parent;
+    const grupoVisible=!grupoPadre || grupoPadre.visible!==false;
+    saresPoiLayer.visible=Boolean(saresLayer.visible && grupoVisible);
+  }
+
+  saresLayer.watch("visible",actualizarVisibilidadSaresPoi);
+  [grupoActivos,grupoIntervenciones,grupoPeligros,grupoVulnerabilidad]
+    .forEach(grupo=>grupo.watch("visible",actualizarVisibilidadSaresPoi));
+  actualizarVisibilidadSaresPoi();
 
   /*
     Los límites políticos son únicamente de referencia visual.
@@ -2759,9 +3485,600 @@ require([
     grupoPeligros,
     grupoIntervenciones,
     grupoActivos,
+    saresPoiLayer,
     grupoLimites,
     seleccionLayer
   ]);
+
+
+
+  /* =========================================================
+     POP-UPS PERSONALIZADOS · PROYECTOS Y CAPAS OPERATIVAS
+     ========================================================= */
+  const customMapPopup = $("customMapPopup");
+  const viewDivElement = $("viewDiv");
+  let ultimaAnclaPopup = null;
+
+  const normalizarClavePopup = valor => String(valor ?? "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, "");
+
+  function escaparHtmlPopup(valor){
+    return String(valor ?? "")
+      .replace(/&/g,"&amp;")
+      .replace(/</g,"&lt;")
+      .replace(/>/g,"&gt;")
+      .replace(/"/g,"&quot;")
+      .replace(/'/g,"&#039;");
+  }
+
+  function indiceAtributosPopup(attrs={}){
+    const indice=new globalThis.Map();
+    Object.entries(attrs||{}).forEach(([clave,valor])=>{
+      indice.set(normalizarClavePopup(clave),valor);
+    });
+    return indice;
+  }
+
+  function obtenerValorPopup(indice,nombres=[]){
+    for(const nombre of nombres){
+      const clave=normalizarClavePopup(nombre);
+      if(!indice.has(clave)) continue;
+      const valor=indice.get(clave);
+      if(valor===0 || valor===false) return valor;
+      if(valor!=null && String(valor).trim()!=="") return valor;
+    }
+    return null;
+  }
+
+  function tieneValorPopup(valor){
+    return valor===0 || valor===false || (valor!=null && String(valor).trim()!=="");
+  }
+
+  function formatearFechaPopup(valor){
+    if(!tieneValorPopup(valor)) return "";
+    let fecha;
+    if(valor instanceof Date) fecha=valor;
+    else if(typeof valor==="number" || /^\d{10,13}$/.test(String(valor).trim())) fecha=new Date(Number(valor));
+    else fecha=new Date(String(valor));
+    if(Number.isNaN(fecha.getTime())) return escaparHtmlPopup(valor);
+    return escaparHtmlPopup(new Intl.DateTimeFormat("es-PE",{day:"2-digit",month:"2-digit",year:"numeric"}).format(fecha));
+  }
+
+  function formatearNumeroPopup(valor,opciones={}){
+    const numero=Number(String(valor).replace(/,/g,""));
+    if(!Number.isFinite(numero)) return escaparHtmlPopup(valor);
+    return new Intl.NumberFormat("es-PE",opciones).format(numero);
+  }
+
+  function formatearValorPopup(valor,tipo="text"){
+    if(!tieneValorPopup(valor)) return "";
+    if(tipo==="date") return formatearFechaPopup(valor);
+    if(tipo==="money") return `S/ ${formatearNumeroPopup(valor,{maximumFractionDigits:2})}`;
+    if(tipo==="percent"){
+      const numero=Number(valor);
+      return Number.isFinite(numero)
+        ? `${new Intl.NumberFormat("es-PE",{maximumFractionDigits:2}).format(numero)} %`
+        : escaparHtmlPopup(valor);
+    }
+    if(tipo==="number") return formatearNumeroPopup(valor,{maximumFractionDigits:2});
+    if(tipo==="dni"){
+      const dni=String(valor).trim();
+      const visible=dni.length>4 ? dni.slice(-4) : dni;
+      return escaparHtmlPopup(`${"•".repeat(Math.max(0,dni.length-visible.length))}${visible}`);
+    }
+    if(tipo==="name"){
+      const partes=String(valor).trim().split(/\s+/).filter(Boolean);
+      const protegido=partes.map((parte,indice)=>{
+        const caracteres=Array.from(parte);
+        if(!caracteres.length) return "";
+        const inicial=caracteres[0];
+        const cantidad=indice===0 ? 1 : Math.max(1,caracteres.length-1);
+        return `${inicial}${"*".repeat(cantidad)}`;
+      }).join(" ");
+      return escaparHtmlPopup(protegido);
+    }
+    if(tipo==="link"){
+      const url=String(valor).trim();
+      if(/^https?:\/\//i.test(url)){
+        return `<a href="${escaparHtmlPopup(url)}" target="_blank" rel="noopener noreferrer">Abrir enlace</a>`;
+      }
+      return escaparHtmlPopup(url);
+    }
+    return escaparHtmlPopup(valor);
+  }
+
+  const camposUbicacionPopup = [
+    {label:"Departamento",names:["departamento","nom_dep","depar","dpto"]},
+    {label:"Provincia",names:["provincia","nom_prov"]},
+    {label:"Distrito",names:["distrito","nom_dist"]}
+  ];
+
+  const camposIntervencionPopup = [
+    {label:"Descripción",names:["descripcion","descripción"],full:true},
+    {label:"Sector",names:["sector"]},
+    {label:"Tipo",names:["tipo"]},
+    {label:"Periodo",names:["periodo"]},
+    {label:"Estado",names:["estado"]},
+    {label:"Estado del convenio",names:["estado_convenio","estadoconvenio"]},
+    {label:"Estado de ficha técnica",names:["estado_ficha_tec","estadofichatec"]},
+    {label:"Ficha técnica",names:["ficha_tec","fichatec"]},
+    {label:"Fecha de inicio",names:["fecha_inicio","fechainicio"],type:"date"},
+    {label:"Fecha de fin",names:["fecha_fin","fechafin"],type:"date"},
+    {label:"Maquinarias asignadas",names:["maquinarias_asignadas","maquinariasasignadas"],type:"number"},
+    {label:"Meta (km)",names:["meta_km","metakm"],type:"number"},
+    {label:"Avance (km)",names:["sum_avance_km","sumavancekm"],type:"number"},
+    {label:"Meta (volumen)",names:["meta_vol","metavol"],type:"number"},
+    {label:"Avance (volumen)",names:["sum_avance_vol","sumavancevol"],type:"number"},
+    {label:"Población beneficiada",names:["pob_beneficiada","pobbeneficiada","poblacion_beneficiada"],type:"number"},
+    {label:"Información de cierre",names:["enlace_info_cierre","enlaceinfocierre"],type:"link",full:true}
+  ];
+
+  const configPopupPersonalizado = new globalThis.Map([
+    [proyectosSaneamientoLayer,{
+      accent:"#1976a8",
+      subtitle:"Proyecto · Saneamiento",
+      fallbackTitle:"Proyecto de saneamiento",
+      title:["nom_proyecto","nombre_proyecto","proyecto","nombre"],
+      sections:[
+        {title:"Identificación",fields:[
+          {label:"CUI",names:["cui","codigo_unico","codigounico","codigo"]},
+          {label:"Programa",names:["programa"]},
+          {label:"Viceministerio",names:["viceministerio","despacho"]},
+          {label:"Tipo de intervención",names:["tipo_intervencion","tipointervencion"]}
+        ]},
+        {title:"Estado del proyecto",fields:[
+          {label:"Estado",names:["estado"]},
+          {label:"Etapa",names:["etapa","tipo_proyecto","tipoproyecto","sub_estado","subestado"]},
+          {label:"Gestión",names:["gestion","gestión"]}
+        ]},
+        {title:"Ubicación",fields:camposUbicacionPopup},
+        {title:"Inversión y avance",fields:[
+          {label:"Inversión",names:["inversion","monto_inversion","montoinversion","monto_actualizado_pip","montoactualizadopip_decimal","costo_actualizado","monto"],type:"money"},
+          {label:"Avance",names:["avance","avance_fisico","avancefisico","porcentaje_avance","porcentajeavance"],type:"percent"}
+        ]}
+      ]
+    }],
+    [proyectosPistasVeredasLayer,{
+      accent:"#a62650",
+      subtitle:"Proyecto · Pistas y veredas",
+      fallbackTitle:"Proyecto de pistas y veredas",
+      title:["nom_proyecto","nombre_proyecto","proyecto","nombre"],
+      sections:[
+        {title:"Identificación",fields:[
+          {label:"CUI",names:["cui","codigo_unico","codigounico","codigo"]},
+          {label:"Programa",names:["programa"]},
+          {label:"Viceministerio",names:["viceministerio","despacho"]},
+          {label:"Tipo de intervención",names:["tipo_intervencion","tipointervencion"]}
+        ]},
+        {title:"Estado del proyecto",fields:[
+          {label:"Estado",names:["estado"]},
+          {label:"Etapa",names:["etapa","tipo_proyecto","tipoproyecto","sub_estado","subestado"]},
+          {label:"Gestión",names:["gestion","gestión"]}
+        ]},
+        {title:"Ubicación",fields:camposUbicacionPopup},
+        {title:"Inversión y avance",fields:[
+          {label:"Inversión",names:["inversion","monto_inversion","montoinversion","monto_actualizado_pip","montoactualizadopip_decimal","costo_actualizado","monto"],type:"money"},
+          {label:"Avance",names:["avance","avance_fisico","avancefisico","porcentaje_avance","porcentajeavance"],type:"percent"}
+        ]}
+      ]
+    }],
+    [maquinariaOperativa,{
+      accent:"#b7791f",
+      subtitle:"Activo · Maquinaria",
+      fallbackTitle:"Maquinaria de limpieza y descolmatación",
+      title:["tipo_unidad","tipo de unidad","clase_unidad","placa_serie"],
+      sections:[
+        {title:"Identificación de la unidad",fields:[
+          {label:"Clase de unidad",names:["clase_unidad","claseunidad"]},
+          {label:"Tipo de unidad",names:["tipo_unidad","tipo de unidad","tipounidad"]},
+          {label:"Placa / serie",names:["placa_serie","placaserie"]},
+          {label:"Titularidad",names:["titularidad"]}
+        ]},
+        {title:"Situación operativa",fields:[
+          {label:"Estado",names:["estado"]},
+          {label:"Subestado",names:["sub_estado","subestado"]},
+          {label:"Programa",names:["programa"]}
+        ]},
+        {title:"Ubicación",fields:camposUbicacionPopup}
+      ]
+    }],
+    [maquinariaSaneamientoDrenajeLayer,{
+      accent:"#0f766e",
+      subtitle:"Activo · Saneamiento y drenaje",
+      fallbackTitle:"Maquinaria de saneamiento y drenaje",
+      title:["tipounidad","tipo_unidad","placaserie","placa_serie"],
+      sections:[
+        {title:"Identificación de la unidad",fields:[
+          {label:"Tipo de unidad",names:["tipounidad","tipo_unidad","tipo de unidad"]},
+          {label:"Placa / serie",names:["placaserie","placa_serie"]},
+          {label:"Línea",names:["linea","línea"]},
+          {label:"Titularidad",names:["titularidad"]}
+        ]},
+        {title:"Situación operativa",fields:[
+          {label:"Estado de la unidad",names:["estadounidad","estado_unidad","estado"]},
+          {label:"Programa",names:["programa"]}
+        ]},
+        {title:"Ubicación",fields:camposUbicacionPopup}
+      ]
+    }],
+    [saresPoiLayer,{
+      accent:"#7f1737",
+      subtitle:"SARES",
+      fallbackTitle:"Sistema alternativo de recolección y evacuación",
+      title:["nombre","name"],
+      sections:[
+        {title:"Información general",fields:[
+          {label:"Tipo de SARE",names:["tipo_sare","tipo de sare","tiposare"]},
+          {label:"Estado",names:["estado"]},
+          {label:"Intervención",names:["intervencion","intervención"]},
+          {label:"Descripción",names:["descripcion","descripción"],full:true},
+          {label:"Localidad",names:["localidad"]},
+          {label:"Población",names:["poblacion","población"],type:"number"}
+        ]},
+        {title:"Características técnicas",fields:[
+          {label:"Altura del pozo",names:["altura_pozo","altura del pozo","alturapozo"],type:"number"},
+          {label:"Ancho del pozo",names:["ancho_pozo","ancho del pozo","anchopozo"],type:"number"},
+          {label:"Capacidad del pozo",names:["capacidad_pozo","capadidad_pozo","capacidad del pozo","capadidad del pozo"],type:"number"},
+          {label:"Caudal (m³)",names:["caudal_m3","caudal (m3)","caudal"],type:"number"},
+          {label:"Capacidad electrobomba",names:["capacidad_electrobomba","capacidad electrobomba"],type:"number"},
+          {label:"Capacidad motobomba",names:["capacidad_motobomba","capacidad motobomba"],type:"number"},
+          {label:"Línea de impulsión",names:["linea_impulsion","linea de impulsion","línea de impulsión"]},
+          {label:"Longitud de línea",names:["longitud_linea_impulsion","longitud de lin.impul.","longitud de linea de impulsion"],type:"number"},
+          {label:"Punto de descarga",names:["punto_descarga","punto descarga"]}
+        ]},
+        {title:"Ubicación",fields:camposUbicacionPopup}
+      ]
+    }],
+    [intervencionesEjecucionLayer,{
+      accent:"#d99a00",
+      subtitle:"Intervención · En ejecución",
+      fallbackTitle:"Intervención de maquinaria en ejecución",
+      title:["ficha_tec","sector","tipo"],
+      sections:[
+        {title:"Intervención",fields:camposIntervencionPopup},
+        {title:"Ubicación",fields:camposUbicacionPopup}
+      ]
+    }],
+    [intervencionesEjecutadasLayer,{
+      accent:"#2e9f55",
+      subtitle:"Intervención · Ejecutada",
+      fallbackTitle:"Intervención de maquinaria ejecutada",
+      title:["ficha_tec","sector","tipo"],
+      sections:[
+        {title:"Intervención",fields:camposIntervencionPopup},
+        {title:"Ubicación",fields:camposUbicacionPopup}
+      ]
+    }],
+    [intervencionesSeveroLayer,{
+      accent:"#8f1739",
+      subtitle:"Intervención programada · Escenario severo",
+      fallbackTitle:"Intervención programada — escenario severo",
+      title:["ficha_tec","sector","tipo"],
+      sections:[
+        {title:"Intervención",fields:camposIntervencionPopup},
+        {title:"Ubicación",fields:camposUbicacionPopup}
+      ]
+    }],
+    [intervencionesModeradoLayer,{
+      accent:"#747b85",
+      subtitle:"Intervención programada · Escenario moderado",
+      fallbackTitle:"Intervención programada — escenario moderado",
+      title:["ficha_tec","sector","tipo"],
+      sections:[
+        {title:"Intervención",fields:camposIntervencionPopup},
+        {title:"Ubicación",fields:camposUbicacionPopup}
+      ]
+    }],
+    [puntosCriticosPriorizadosLayer,{
+      accent:"#d35436",
+      subtitle:"Puntos críticos priorizados por el PNC – Escenario severo",
+      fallbackTitle:"Punto crítico priorizado por el PNC",
+      title:["nombre","codigo","sector"],
+      sections:[
+        {title:"Información del punto crítico",fields:[
+          {label:"Código",names:["codigo"]},
+          {label:"Nombre",names:["nombre"],full:true},
+          {label:"Sector",names:["sector"]},
+          {label:"Prioridad",names:["prioridad"]},
+          {label:"Tipo de peligro",names:["tipo_pelig","tipo_peligro"]},
+          {label:"Nivel de peligro",names:["nivel_peli","nivel_peligro"]}
+        ]},
+        {title:"Ubicación",fields:camposUbicacionPopup}
+      ]
+    }],
+    [puntosCriticosLayer,{
+      accent:"#166096",
+      subtitle:"Puntos críticos ANA",
+      fallbackTitle:"Punto crítico ANA",
+      title:["codigo","sector","rio_qda"],
+      sections:[
+        {title:"Información del punto crítico",fields:[
+          {label:"Código",names:["codigo"]},
+          {label:"Sector",names:["sector"]},
+          {label:"Río / quebrada",names:["rio_qda","rio_quebrada"]},
+          {label:"Tipo",names:["tipo"]},
+          {label:"Peligro",names:["peligro"]},
+          {label:"Actividad",names:["actividad"],full:true},
+          {label:"Familias",names:["familias"],type:"number"},
+          {label:"Viviendas",names:["viviendas"],type:"number"},
+          {label:"Periodo",names:["periodo"]},
+          {label:"Observación",names:["observacio","observacion"],full:true}
+        ]},
+        {title:"Ubicación",fields:camposUbicacionPopup}
+      ]
+    }],
+    [baeConvocatoriaLayer,{
+      accent:"#7e57c2",
+      subtitle:"Bonos BAE · Convocados",
+      fallbackTitle:"Registro BAE convocado",
+      title:["convocatoria"],
+      sections:[
+        {title:"Beneficiario y convocatoria",fields:[
+          {label:"Convocatoria",names:["convocatoria"]},
+          {label:"Nombres",names:["nombres_pb","nombre_pb","nombres","nombre"],type:"name",full:true},
+          {label:"DNI",names:["dni_pb","dni"],type:"dni"},
+          {label:"Estado",names:["estado"]}
+        ]},
+        {title:"Ubicación",fields:camposUbicacionPopup}
+      ]
+    }],
+    [baePotencialOriginalLayer,{
+      accent:"#7e57c2",
+      subtitle:"Bonos BAE · Convocados",
+      fallbackTitle:"Potencial beneficiario BAE",
+      title:["convocatoria"],
+      sections:[
+        {title:"Beneficiario y convocatoria",fields:[
+          {label:"Convocatoria",names:["convocatoria"]},
+          {label:"Nombres",names:["nombres_pb","nombre_pb","nombres","nombre"],type:"name",full:true},
+          {label:"DNI",names:["dni_pb","dni"],type:"dni"},
+          {label:"Estado",names:["estado"]}
+        ]},
+        {title:"Ubicación",fields:camposUbicacionPopup}
+      ]
+    }],
+    [baeBeneficiarioLayer,{
+      accent:"#2e7d32",
+      subtitle:"Bonos BAE · Beneficiarios",
+      fallbackTitle:"Beneficiario BAE",
+      title:["convocatoria"],
+      sections:[
+        {title:"Beneficiario y convocatoria",fields:[
+          {label:"Convocatoria",names:["convocatoria"]},
+          {label:"Nombres",names:["nombres_pb","nombre_pb","nombres","nombre"],type:"name",full:true},
+          {label:"DNI",names:["dni_pb","dni"],type:"dni"},
+          {label:"Estado",names:["estado"]}
+        ]},
+        {title:"Ubicación",fields:camposUbicacionPopup}
+      ]
+    }]
+  ]);
+
+  const capasPopupPersonalizado=Array.from(configPopupPersonalizado.keys());
+
+  /*
+    Bloqueo reforzado del pop-up nativo en las capas personalizadas.
+    Se aplica antes y después de cargar cada servicio para impedir que
+    ArcGIS restaure automáticamente la plantilla publicada.
+  */
+  function bloquearPopupNativo(layer){
+    if(!layer) return;
+    layer.popupEnabled=false;
+    layer.popupTemplate=null;
+  }
+
+  capasPopupPersonalizado.forEach(layer=>{
+    bloquearPopupNativo(layer);
+
+    if(typeof layer.when === "function"){
+      layer.when(()=>bloquearPopupNativo(layer)).catch(()=>{});
+    }
+
+    if(typeof layer.watch === "function"){
+      layer.watch("popupEnabled",valor=>{
+        if(valor) bloquearPopupNativo(layer);
+      });
+    }
+  });
+
+  function construirPopupPersonalizado(config,attrs){
+    const indice=indiceAtributosPopup(attrs);
+    const titulo=obtenerValorPopup(indice,config.title||[]) || config.fallbackTitle || "Detalle";
+
+    const secciones=(config.sections||[]).map(seccion=>{
+      const campos=(seccion.fields||[]).map(campo=>{
+        const valor=obtenerValorPopup(indice,campo.names||[]);
+        if(!tieneValorPopup(valor)) return "";
+        const valorHtml=formatearValorPopup(valor,campo.type||"text");
+        if(!valorHtml) return "";
+        return `
+          <div class="customPopupField${campo.full?" full":""}">
+            <span class="customPopupLabel">${escaparHtmlPopup(campo.label)}</span>
+            <span class="customPopupValue">${valorHtml}</span>
+          </div>`;
+      }).filter(Boolean).join("");
+
+      if(!campos) return "";
+      return `
+        <section class="customPopupSection">
+          <h4 class="customPopupSectionTitle">${escaparHtmlPopup(seccion.title)}</h4>
+          <div class="customPopupGrid">${campos}</div>
+        </section>`;
+    }).filter(Boolean).join("");
+
+    return `
+      <div class="customPopupHead">
+        <div class="customPopupHeadMain">
+          <span class="customPopupDot" aria-hidden="true"></span>
+          <div class="customPopupHeading">
+            <h3 class="customPopupTitle">${escaparHtmlPopup(titulo)}</h3>
+            <span class="customPopupSubtitle">${escaparHtmlPopup(config.subtitle||"Detalle")}</span>
+          </div>
+        </div>
+        <button type="button" class="customPopupClose" data-custom-popup-close aria-label="Cerrar">✕</button>
+      </div>
+      <div class="customPopupBody">
+        ${secciones || '<div class="customPopupEmpty">No hay información disponible para este registro.</div>'}
+      </div>`;
+  }
+
+  async function obtenerFeatureCompletoPopup(layer,graphic){
+    try{
+      await layer.load();
+      const oidField=layer.objectIdField;
+      const oid=oidField ? graphic?.attributes?.[oidField] : null;
+      if(!oidField || oid==null) return graphic;
+
+      const query=layer.createQuery();
+      query.objectIds=[oid];
+      query.outFields=["*"];
+      query.returnGeometry=true;
+      const result=await layer.queryFeatures(query);
+      return result.features?.[0] || graphic;
+    }catch(error){
+      console.warn("No se pudo consultar el registro completo para el pop-up:",error);
+      return graphic;
+    }
+  }
+
+  function cerrarPopupPersonalizado(){
+    customMapPopup.classList.remove("open");
+    customMapPopup.innerHTML="";
+    ultimaAnclaPopup=null;
+  }
+
+  function posicionarPopupPersonalizado(ancla){
+    if(!ancla || !customMapPopup.classList.contains("open")) return;
+    const workspace=document.querySelector(".workspace");
+    const filtro=document.querySelector(".dashboardPanel");
+    if(!workspace || !viewDivElement) return;
+
+    const workspaceRect=workspace.getBoundingClientRect();
+    const mapaRect=viewDivElement.getBoundingClientRect();
+    const mapa={
+      left:mapaRect.left-workspaceRect.left,
+      top:mapaRect.top-workspaceRect.top,
+      right:mapaRect.right-workspaceRect.left,
+      bottom:mapaRect.bottom-workspaceRect.top
+    };
+
+    const margen=10;
+    const separacion=14;
+    const ancho=customMapPopup.offsetWidth;
+    const alto=customMapPopup.offsetHeight;
+    let left=ancla.x+separacion;
+    let top=ancla.y+separacion;
+
+    if(left+ancho>mapa.right-margen) left=ancla.x-ancho-separacion;
+    if(top+alto>mapa.bottom-margen) top=ancla.y-alto-separacion;
+
+    left=Math.max(mapa.left+margen,Math.min(left,mapa.right-ancho-margen));
+    top=Math.max(mapa.top+margen,Math.min(top,mapa.bottom-alto-margen));
+
+    if(filtro){
+      const fr=filtro.getBoundingClientRect();
+      const filtroLocal={
+        left:fr.left-workspaceRect.left,
+        top:fr.top-workspaceRect.top,
+        right:fr.right-workspaceRect.left,
+        bottom:fr.bottom-workspaceRect.top
+      };
+      const intersecta=!(left+ancho<filtroLocal.left || left>filtroLocal.right || top+alto<filtroLocal.top || top>filtroLocal.bottom);
+      if(intersecta){
+        const candidatoDerecha=filtroLocal.right+10;
+        if(candidatoDerecha+ancho<=mapa.right-margen) left=candidatoDerecha;
+        else{
+          const candidatoAbajo=filtroLocal.bottom+10;
+          if(candidatoAbajo+alto<=mapa.bottom-margen) top=candidatoAbajo;
+        }
+      }
+    }
+
+    customMapPopup.style.left=`${left}px`;
+    customMapPopup.style.top=`${top}px`;
+  }
+
+  function mostrarPopupPersonalizado(config,feature,event){
+    const workspace=document.querySelector(".workspace");
+    if(!workspace || !viewDivElement) return;
+    const workspaceRect=workspace.getBoundingClientRect();
+    const viewRect=viewDivElement.getBoundingClientRect();
+    ultimaAnclaPopup={
+      x:viewRect.left-workspaceRect.left+event.x,
+      y:viewRect.top-workspaceRect.top+event.y
+    };
+
+    customMapPopup.style.setProperty("--popup-accent",config.accent||"#7f1737");
+    customMapPopup.innerHTML=construirPopupPersonalizado(config,feature?.attributes||{});
+    customMapPopup.classList.add("open");
+    requestAnimationFrame(()=>posicionarPopupPersonalizado(ultimaAnclaPopup));
+  }
+
+  customMapPopup.addEventListener("click",event=>{
+    if(event.target.closest("[data-custom-popup-close]")) cerrarPopupPersonalizado();
+  });
+
+  function resolverCapaPopup(graphic){
+    const candidatas=[
+      graphic?.layer,
+      graphic?.sourceLayer,
+      graphic?.layer?.parent,
+      graphic?.sourceLayer?.parent
+    ].filter(Boolean);
+
+    return candidatas.find(layer=>configPopupPersonalizado.has(layer)) || null;
+  }
+
+  view.on("click",async event=>{
+    try{
+      /* Nunca permitir que quede visible una ventana nativa. */
+      try{ view.popup.close(); }catch(_){ }
+
+      /*
+        Primer intento: limitar el hitTest a las capas con pop-up propio.
+        Si el navegador/servicio no respeta include, se hace un segundo
+        hitTest general y se filtran los resultados manualmente.
+      */
+      let hit=await view.hitTest(event,{include:capasPopupPersonalizado});
+      let resultado=hit.results.find(item=>resolverCapaPopup(item?.graphic));
+
+      if(!resultado){
+        hit=await view.hitTest(event);
+        resultado=hit.results.find(item=>resolverCapaPopup(item?.graphic));
+      }
+
+      if(!resultado){
+        cerrarPopupPersonalizado();
+        return;
+      }
+
+      const layer=resolverCapaPopup(resultado.graphic);
+      const config=layer ? configPopupPersonalizado.get(layer) : null;
+      if(!layer || !config){
+        cerrarPopupPersonalizado();
+        return;
+      }
+
+      try{ view.popup.close(); }catch(_){ }
+      const feature=await obtenerFeatureCompletoPopup(layer,resultado.graphic);
+      mostrarPopupPersonalizado(config,feature,event);
+    }catch(error){
+      console.warn("No se pudo abrir el pop-up personalizado:",error);
+      cerrarPopupPersonalizado();
+    }
+  });
+
+  window.addEventListener("resize",()=>{
+    if(ultimaAnclaPopup) requestAnimationFrame(()=>posicionarPopupPersonalizado(ultimaAnclaPopup));
+  });
+
+  window.addEventListener("keydown",event=>{
+    if(event.key==="Escape") cerrarPopupPersonalizado();
+  });
+
 
   /* =========================================================
      ÁRBOL PERSONALIZADO DE CAPAS CON DRAG & DROP
@@ -2788,7 +4105,8 @@ require([
       children:[
         intervencionesEjecucionLayer,
         intervencionesEjecutadasLayer,
-        intervencionesXlsLayer,
+        intervencionesSeveroLayer,
+        intervencionesModeradoLayer,
         baeBeneficiarioLayer
       ]
     },
@@ -2801,7 +4119,10 @@ require([
         zonasInundadasLayer,
         riesgoInundacionLayer,
         zonasExpuestasPeligroLayer,
-        puntosCriticosPriorizadosLayer
+        puntosCriticosPriorizadosLayer,
+        puntosCriticosLayer,
+        quebradasLayer,
+        zonasRiesgoNoMitigablesLayer
       ]
     },
     {
@@ -3288,7 +4609,46 @@ require([
   sincronizarOrdenRaiz();
   renderizarArbolCapas();
   new Legend({ view, container:"legendWrap", respectLayerVisibility:true });
-  new BasemapGallery({ view, container:"basemapWrap" });
+  function renderizarSelectorMapasBase(){
+    const contenedor=$("basemapWrap");
+    if(!contenedor) return;
+
+    const opciones=[
+      {id:"topo-vector",titulo:"Topográfico",icono:"🗺️"},
+      {id:"satellite",titulo:"Imagen satelital",icono:"🛰️"}
+    ];
+
+    let mapaBaseActivo="topo-vector";
+
+    contenedor.innerHTML=`
+      <div class="basemapOnlyGrid" role="radiogroup" aria-label="Mapas base disponibles">
+        ${opciones.map(opcion=>`
+          <button type="button" class="basemapChoice${opcion.id===mapaBaseActivo?" active":""}"
+                  data-basemap-id="${opcion.id}" role="radio"
+                  aria-checked="${opcion.id===mapaBaseActivo?"true":"false"}">
+            <span class="basemapChoiceIcon" aria-hidden="true">${opcion.icono}</span>
+            <span>${opcion.titulo}</span>
+          </button>`).join("")}
+      </div>`;
+
+    const actualizarEstado=()=>{
+      contenedor.querySelectorAll("[data-basemap-id]").forEach(boton=>{
+        const activo=boton.dataset.basemapId===mapaBaseActivo;
+        boton.classList.toggle("active",activo);
+        boton.setAttribute("aria-checked",activo?"true":"false");
+      });
+    };
+
+    contenedor.querySelectorAll("[data-basemap-id]").forEach(boton=>{
+      boton.addEventListener("click",()=>{
+        mapaBaseActivo=boton.dataset.basemapId;
+        map.basemap=mapaBaseActivo;
+        actualizarEstado();
+      });
+    });
+  }
+
+  renderizarSelectorMapasBase();
 
   let piuraFeature=null, initialViewpoint=null, provincias=[], distritos=[];
   let departamentoView=null, provinciaView=null, distritoView=null, proyectosView=null;
@@ -3406,10 +4766,19 @@ require([
     return normalizar(v).replace(/[^A-Z0-9]/g,"");
   }
 
+  const CAMPOS_DEPARTAMENTO=[
+    "DEPARTAMENTO","DEPARTAMEN","NOM_DEP","NOMB_DEP","NOMBRE_DEPARTAMENTO",
+    "NOMDPTO","NOM_DPTO","DPTO","DEPARTAMENTO_NOMBRE","NOMBREDEPARTAMENTO"
+  ].map(nombreCampoNormalizado);
+
   const CAMPOS_PROVINCIA=[
     "PROVINCIA","NOM_PROV","NOMBRE_PROVINCIA","NOMPROV",
     "PROV","PROVINCIA_NOMBRE","NOMB_PROV","NOMBREPROVINCIA"
   ].map(nombreCampoNormalizado);
+
+  // Las capas 4 (severo) y 5 (moderado) usan los campos
+  // provincia y distrito, por lo que quedan enlazadas automáticamente
+  // con los filtros territoriales del tablero.
 
   // La capa "Zonas expuestas al peligro" usa:
   // provincia = nom_prov
@@ -3494,6 +4863,17 @@ require([
           const fields=meta.fields||[];
           const whereTerritorial=construirWhereConCampos(fields);
           const condiciones=[];
+
+          if(layer.__departmentFilterValue){
+            const campoDepartamento=detectarCampo(fields,CAMPOS_DEPARTAMENTO);
+            if(campoDepartamento){
+              condiciones.push(
+                `UPPER(${campoDepartamento}) = UPPER('${escaparSQL(layer.__departmentFilterValue)}')`
+              );
+            }else{
+              console.warn(`[Filtro] ${layer.title} / ${sublayer.title}: no se encontró el campo departamento`);
+            }
+          }
 
           if(whereTerritorial && whereTerritorial !== "1=1") condiciones.push(`(${whereTerritorial})`);
 
@@ -3611,16 +4991,14 @@ require([
   async function cargarIndicadorBae(){
     try{
       const capas=await obtenerCapasBae();
-      const [convocatoria,potencial,beneficiario]=await Promise.all([
-        contarCapaRest(`${URLS.bonosBae}/${capas.convocatoria.id}`),
-        contarCapaRest(`${URLS.bonosBae}/${capas.potencial.id}`),
+      const [totalConvocados,beneficiario]=await Promise.all([
+        // Suma todas las categorías hoja publicadas en el servicio BAE.
+        // contarCapaRest aplica también los filtros de provincia y distrito.
+        contarCapaRest(URLS.bonosBae),
         contarCapaRest(`${URLS.bonosBae}/${capas.beneficiario.id}`)
       ]);
 
-      // Potenciales BAE = Convocatoria + Potencial beneficiario.
-      const potencialBeneficiario=Number(convocatoria||0)+Number(potencial||0);
-
-      pintarIndicador("baePotencial","indBaePotencial",potencialBeneficiario,false);
+      pintarIndicador("baePotencial","indBaePotencial",totalConvocados,false);
       pintarIndicador("baeBeneficiario","indBaeBeneficiario",beneficiario,false);
     }catch(error){
       console.warn("Indicadores BAE",error);
@@ -3658,12 +5036,15 @@ require([
         "tipo_proyecto = 'OBRA' AND estado = 'CONCLUIDO'"
       )],
       ["maquinariaLimpieza","indMaquinariaLimpieza",()=>contarCapaRest(URLS.maquinariaOperativa)],
-      ["maquinariaSaneamientoDrenaje","indMaquinariaSaneamientoDrenaje",()=>contarCapaRest(URLS.maquinariaSaneamientoDrenaje)],
+      ["maquinariaSaneamientoDrenaje","indMaquinariaSaneamientoDrenaje",()=>contarCapaRest(
+        URLS.maquinariaSaneamientoDrenaje,
+        "UPPER(departamento) = 'PIURA'"
+      )],
       ["intervencionesEjecutadas","indIntervencionesEjecutadas",()=>contarCapaRest(URLS.intervencionesEjecutadas)],
       ["intervencionesEjecucion","indIntervencionesEjecucion",()=>contarCapaRest(URLS.intervencionesEjecucion)],
-      ["intervencionesProgramadas","indIntervencionesProgramadas",()=>contarCapaRest(URLS.intervencionesXls)],
-      ["puntosCriticosPriorizados","indPuntosCriticosPriorizados",()=>contarCapaRest(URLS.puntosCriticosPriorizados)],
-      ["zonasExpuestas","indZonasExpuestas",()=>contarCapaRest(URLS.zonasExpuestasPeligro)]
+      ["intervencionesProgramadas","indIntervencionesProgramadas",()=>contarCapaRest(URLS.intervencionesSevero)],
+      ["intervencionesProgramadasModerado","indIntervencionesProgramadasModerado",()=>contarCapaRest(URLS.intervencionesModerado)],
+      ["puntosCriticosPriorizados","indPuntosCriticosPriorizados",()=>contarCapaRest(URLS.puntosCriticosPriorizados)]
     ];
 
     await Promise.all([
@@ -3737,20 +5118,101 @@ require([
 
   $("btnZoom").addEventListener("click",async()=>{ if(currentGeometry) await view.goTo(currentGeometry.extent.expand(1.08),{duration:500}); });
 
-  const panelMap={btnLayers:"layersPanel",btnBudgetModerado:"budgetModeradoPanel",btnBudgetSevero:"budgetSeveroPanel",btnLegend:"legendPanel",btnBasemap:"basemapPanel"};
+  /*
+    Mantiene la leyenda pegada debajo del filtro territorial y limita
+    su crecimiento hasta antes del botón. El contenido interno conserva
+    el desplazamiento vertical cuando aparecen más capas en la leyenda.
+  */
+  function ajustarLayoutLeyenda(){
+    const workspace=document.querySelector(".workspace");
+    const filtro=document.querySelector(".dashboardPanel");
+    const dock=document.querySelector(".legendDock");
+    const panel=$("legendPanel");
+    if(!workspace || !filtro || !dock || !panel) return;
+
+    const workspaceRect=workspace.getBoundingClientRect();
+    const filtroRect=filtro.getBoundingClientRect();
+    const dockRect=dock.getBoundingClientRect();
+    const separacionSuperior=8;
+    const separacionInferior=10;
+
+    const left=Math.max(8,filtroRect.left-workspaceRect.left);
+    const top=Math.max(8,filtroRect.bottom-workspaceRect.top+separacionSuperior);
+    const limiteInferior=dockRect.top-workspaceRect.top-separacionInferior;
+    const height=Math.max(0,limiteInferior-top);
+
+    panel.style.setProperty("left",`${left}px`,"important");
+    panel.style.setProperty("right","auto","important");
+    panel.style.setProperty("top",`${top}px`,"important");
+    panel.style.setProperty("bottom","auto","important");
+    panel.style.setProperty("width",`${filtroRect.width}px`,"important");
+    panel.style.setProperty("height",`${height}px`,"important");
+    panel.style.setProperty("max-height",`${height}px`,"important");
+  }
+
+  const programarAjusteLeyenda=()=>requestAnimationFrame(ajustarLayoutLeyenda);
+  window.addEventListener("resize",programarAjusteLeyenda);
+
+  if("ResizeObserver" in window){
+    const observadorLeyenda=new ResizeObserver(programarAjusteLeyenda);
+    const filtro=document.querySelector(".dashboardPanel");
+    const dock=document.querySelector(".legendDock");
+    if(filtro) observadorLeyenda.observe(filtro);
+    if(dock) observadorLeyenda.observe(dock);
+  }
+
+  programarAjusteLeyenda();
+  setTimeout(ajustarLayoutLeyenda,250);
+
+  /*
+    La leyenda funciona de manera independiente del resto de herramientas.
+    Capas, presupuestos y mapas base siguen siendo excluyentes entre sí,
+    pero ya no abren ni cierran la leyenda.
+  */
+  const panelMap={
+    btnLayers:"layersPanel",
+    btnBudgetModerado:"budgetModeradoPanel",
+    btnBudgetSevero:"budgetSeveroPanel",
+    btnBasemap:"basemapPanel"
+  };
+
   Object.entries(panelMap).forEach(([btnId,panelId])=>{
     $(btnId).addEventListener("click",()=>{
-      Object.values(panelMap).forEach(id=>$(id).classList.toggle("open",id===panelId && !$(id).classList.contains("open")));
-      Object.keys(panelMap).forEach(id=>$(id).classList.toggle("active",id===btnId && $(panelId).classList.contains("open")));
-      const legendButton=$("btnLegend");
-      if(legendButton) legendButton.setAttribute("aria-expanded",String($("legendPanel").classList.contains("open")));
+      const panelSeleccionado=$(panelId);
+      const debeAbrir=!panelSeleccionado.classList.contains("open");
+
+      Object.values(panelMap).forEach(id=>$(id).classList.remove("open"));
+      Object.keys(panelMap).forEach(id=>$(id).classList.remove("active"));
+
+      if(debeAbrir){
+        panelSeleccionado.classList.add("open");
+        $(btnId).classList.add("active");
+      }
     });
   });
+
+  const legendButton=$("btnLegend");
+  const legendPanel=$("legendPanel");
+
+  legendButton.addEventListener("click",()=>{
+    const abierta=legendPanel.classList.toggle("open");
+    legendButton.classList.toggle("active",abierta);
+    legendButton.setAttribute("aria-expanded",String(abierta));
+    programarAjusteLeyenda();
+  });
+
   document.querySelectorAll("[data-close]").forEach(btn=>btn.addEventListener("click",()=>{
-    $(btn.dataset.close).classList.remove("open");
-    Object.keys(panelMap).forEach(id=>$(id).classList.remove("active"));
-    const legendButton=$("btnLegend");
-    if(legendButton) legendButton.setAttribute("aria-expanded","false");
+    const panelId=btn.dataset.close;
+    $(panelId).classList.remove("open");
+
+    if(panelId==="legendPanel"){
+      legendButton.classList.remove("active");
+      legendButton.setAttribute("aria-expanded","false");
+      return;
+    }
+
+    const botonRelacionado=Object.keys(panelMap).find(id=>panelMap[id]===panelId);
+    if(botonRelacionado) $(botonRelacionado).classList.remove("active");
   }));
 
   view.when(async()=>{
